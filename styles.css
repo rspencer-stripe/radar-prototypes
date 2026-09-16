@@ -195,6 +195,35 @@ body {
   font-size: 13px;
 }
 
+.placeholder-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.card-thumb.placeholder-figma .placeholder-icon {
+  background: rgba(255, 71, 133, 0.12);
+  color: #ff4785;
+}
+
+.card-thumb.placeholder-doc .placeholder-icon {
+  background: rgba(99, 91, 255, 0.12);
+  color: var(--accent);
+}
+
+.card-thumb.placeholder-generic .placeholder-icon {
+  background: rgba(66, 84, 102, 0.1);
+  color: var(--ink-light);
+}
+
 .card-body {
   padding: 16px 18px 18px;
   display: flex;
@@ -244,11 +273,15 @@ body {
   right: 10px;
   display: flex;
   gap: 6px;
-  opacity: 0;
-  transition: opacity 0.12s ease;
 }
 
-.card:hover .card-actions {
+.card-actions .icon-btn {
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+}
+
+.card:hover .card-actions .icon-btn,
+.card-actions .icon-btn.active {
   opacity: 1;
 }
 
@@ -256,43 +289,20 @@ body {
   border-color: rgba(99, 91, 255, 0.35);
 }
 
-.pin-indicator {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-sm);
-  z-index: 1;
-  animation: pin-pop 0.25s cubic-bezier(0.2, 0, 0.2, 1.4);
-}
-
-@keyframes pin-pop {
-  from {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.pin-indicator svg {
-  width: 12px;
-  height: 12px;
-}
-
 .icon-btn.active {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+  animation: pin-pop 0.2s cubic-bezier(0.2, 0, 0.2, 1.4);
+}
+
+@keyframes pin-pop {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .icon-btn {
@@ -566,6 +576,61 @@ body {
 
 .field-hint.error {
   color: var(--danger);
+}
+
+.upload-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 28px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-light);
+  background: #fafbfc;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.upload-drop:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(99, 91, 255, 0.04);
+}
+
+.upload-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(99, 91, 255, 0.1);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.upload-filled {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-filled-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.upload-filled-actions .btn {
+  padding: 7px 14px;
+  font-size: 13px;
 }
 
 .preview-thumb {
