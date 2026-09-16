@@ -48,8 +48,10 @@ function selectTag(tag) {
 function renderTagPicker() {
   tagPicker.innerHTML = '';
   const selected = fieldType.value;
+  const tags = getAllTags();
+  if (selected && !tags.includes(selected)) tags.push(selected);
 
-  for (const tag of getAllTags()) {
+  for (const tag of tags) {
     const pill = document.createElement('button');
     pill.type = 'button';
     pill.className = 'tag-pill' + (tag === selected ? ' active' : '');
