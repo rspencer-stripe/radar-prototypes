@@ -26,38 +26,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Topbar */
-.topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.topbar-inner {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 18px 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--ink);
-}
-
-.brand-mark {
-  color: var(--accent);
-  font-size: 14px;
-}
-
 /* Page */
 .page {
   max-width: 1120px;
@@ -117,8 +85,16 @@ body {
 
 .filter-bar {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 8px;
   flex-wrap: wrap;
 }
 

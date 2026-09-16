@@ -10,16 +10,6 @@
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <span class="brand-mark">◆</span>
-        <span class="brand-name">Radar Design</span>
-      </div>
-      <button class="btn btn-primary" id="add-btn">Add item</button>
-    </div>
-  </header>
-
   <main class="page">
     <div class="hero">
       <div class="hero-gradient" aria-hidden="true"></div>
@@ -32,8 +22,11 @@
       </div>
     </div>
 
-    <div class="filter-bar" id="filter-bar">
-      <button class="filter-chip active" data-filter="All">All</button>
+    <div class="filter-bar">
+      <div class="filter-chips" id="filter-bar">
+        <button class="filter-chip active" data-filter="All">All</button>
+      </div>
+      <button class="btn btn-primary" id="add-btn">Add item</button>
     </div>
 
     <div id="empty-state" class="empty-state" hidden>
@@ -68,22 +61,20 @@
           <input type="text" id="field-name" required placeholder="e.g. Radar rules builder v2" />
         </label>
 
-        <div class="field-row">
-          <div class="field">
-            <span class="field-label">Tag</span>
-            <div class="tag-picker" id="tag-picker"></div>
-            <input type="hidden" id="field-type" required />
-          </div>
+        <label class="field">
+          <span class="field-label">Author</span>
+          <select id="field-author" required>
+            <option value="" disabled selected>Select an author</option>
+            <option value="Anne">Anne</option>
+            <option value="Shelby">Shelby</option>
+            <option value="Ryan">Ryan</option>
+          </select>
+        </label>
 
-          <label class="field">
-            <span class="field-label">Author</span>
-            <select id="field-author" required>
-              <option value="" disabled selected>Select an author</option>
-              <option value="Anne">Anne</option>
-              <option value="Shelby">Shelby</option>
-              <option value="Ryan">Ryan</option>
-            </select>
-          </label>
+        <div class="field">
+          <span class="field-label">Tag</span>
+          <div class="tag-picker" id="tag-picker"></div>
+          <input type="hidden" id="field-type" required />
         </div>
 
         <label class="field">
