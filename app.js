@@ -1025,9 +1025,29 @@ function renderGridView(visible) {
   flipAnimate(prevRects);
 }
 
+const CARD_GROW_MS = 260; // line -> wireframe box; sibling shift is synced to this
+const RING_DRAW_MS = 320; // gradient stroke traces the wireframe's perimeter
+const RING_FILL_AT = 0.62; // real content starts crossfading in at this fraction of the draw
+const RING_FADE_MS = 180; // ring fades out once the trace completes
+const NEW_CARD_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
 function flipAnimate(prevRects) {
+  let newCard = null;
+  if (newItemId) {
+    for (const el of grid.children) {
+      if (el.dataset.id === newItemId) {
+        newCard = el;
+        break;
+      }
+    }
+    newItemId = null;
+  }
+
+  if (newCard) animateCardCreate(newCard);
+
   if (!prevRects.size) return;
   for (const el of grid.children) {
+    if (el === newCard) continue;
     const prev = prevRects.get(el.dataset.id);
     if (!prev) {
       el.classList.add('card-enter');
@@ -1040,12 +1060,82 @@ function flipAnimate(prevRects) {
     if (!dx && !dy) continue;
     el.style.transition = 'none';
     el.style.transform = `translate(${dx}px, ${dy}px)`;
+    const shiftMs = newCard ? CARD_GROW_MS : 350;
+    const ease = newCard ? NEW_CARD_EASE : 'cubic-bezier(0.2, 0, 0.2, 1)';
     requestAnimationFrame(() => {
-      el.style.transition = 'transform 0.35s cubic-bezier(0.2, 0, 0.2, 1)';
+      el.style.transition = `transform ${shiftMs}ms ${ease}`;
       el.style.transform = '';
       el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
     });
   }
+}
+
+function animateCardCreate(card) {
+  card.classList.add('card-new');
+  card.style.setProperty('--card-new-ms', `${CARD_GROW_MS}ms`);
+  card.addEventListener('animationend', () => startStrokeWave(card), { once: true });
+}
+
+function startStrokeWave(card) {
+  const rect = card.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  const radius = parseFloat(getComputedStyle(card).borderRadius) || 12;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const uid = 'card-ring-' + Math.random().toString(36).slice(2, 8);
+
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'card-draw-ring');
+  svg.setAttribute('viewBox', `0 0 ${w + 2} ${h + 2}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+
+  const defs = document.createElementNS(svgNS, 'defs');
+  const gradient = document.createElementNS(svgNS, 'linearGradient');
+  gradient.setAttribute('id', uid);
+  gradient.setAttribute('x1', '0');
+  gradient.setAttribute('y1', '0');
+  gradient.setAttribute('x2', '1');
+  gradient.setAttribute('y2', '1');
+  [
+    ['0%', '#635bff'],
+    ['50%', '#a960ee'],
+    ['100%', '#ff5996'],
+  ].forEach(([offset, color]) => {
+    const stop = document.createElementNS(svgNS, 'stop');
+    stop.setAttribute('offset', offset);
+    stop.setAttribute('stop-color', color);
+    gradient.appendChild(stop);
+  });
+  defs.appendChild(gradient);
+  svg.appendChild(defs);
+
+  const rectEl = document.createElementNS(svgNS, 'rect');
+  rectEl.setAttribute('x', 1);
+  rectEl.setAttribute('y', 1);
+  rectEl.setAttribute('width', Math.max(0, w));
+  rectEl.setAttribute('height', Math.max(0, h));
+  rectEl.setAttribute('rx', radius);
+  rectEl.setAttribute('ry', radius);
+  rectEl.setAttribute('stroke', `url(#${uid})`);
+  svg.appendChild(rectEl);
+  card.appendChild(svg);
+
+  const length = rectEl.getTotalLength();
+  rectEl.style.strokeDasharray = String(length);
+  rectEl.style.strokeDashoffset = String(length);
+
+  requestAnimationFrame(() => {
+    rectEl.style.transition = `stroke-dashoffset ${RING_DRAW_MS}ms ${NEW_CARD_EASE}`;
+    rectEl.style.strokeDashoffset = '0';
+  });
+
+  setTimeout(() => card.classList.add('card-new-fill'), RING_DRAW_MS * RING_FILL_AT);
+  setTimeout(() => svg.classList.add('ring-out'), RING_DRAW_MS);
+  setTimeout(() => {
+    svg.remove();
+    card.classList.remove('card-new', 'card-new-fill');
+    card.style.removeProperty('--card-new-ms');
+  }, RING_DRAW_MS + RING_FADE_MS);
 }
 
 function openModal(prototype) {
@@ -1122,11 +1212,15 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify(payload),
     });
   } else {
-    await fetch('/api/prototypes', {
+    const res = await fetch('/api/prototypes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if (res.ok) {
+      const created = await res.json();
+      newItemId = String(created.id);
+    }
   }
 
   closeModal();
