@@ -558,9 +558,9 @@ body {
 
 body.hide-thumbs .card {
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
-  padding: 10px 44px 10px 14px;
+  padding: 12px 44px 12px 14px;
 }
 
 body.hide-thumbs .card-thumb {
@@ -587,26 +587,14 @@ body.hide-thumbs .card-body {
   flex: 1 1 auto;
   min-width: 0;
   padding: 0;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 body.hide-thumbs .card-name {
-  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-body.hide-thumbs .card-meta {
-  flex-shrink: 0;
-}
-
-body.hide-thumbs .card-meta span:nth-child(2),
-body.hide-thumbs .card-meta span:nth-child(3) {
-  display: none;
 }
 
 body.hide-thumbs .card .type-badge {
@@ -614,8 +602,8 @@ body.hide-thumbs .card .type-badge {
 }
 
 body.hide-thumbs .card-actions {
-  top: 50%;
-  transform: translateY(-50%);
+  top: 12px;
+  transform: none;
 }
 
 body.hide-thumbs .card:hover {
