@@ -397,6 +397,7 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-family: inherit;
   font-size: 14px;
@@ -409,9 +410,14 @@ body {
 }
 
 .btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
+  display: block;
+}
+
+.btn span {
+  line-height: 1;
 }
 
 .go-link {
