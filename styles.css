@@ -98,7 +98,7 @@ body {
 }
 
 .tone-muted {
-  color: #97a3b5;
+  color: var(--ink-light);
 }
 
 .filter-bar {
