@@ -12,7 +12,32 @@ const fieldImage = document.getElementById('field-image');
 const fieldLink = document.getElementById('field-link');
 const filterBar = document.getElementById('filter-bar');
 const tagPicker = document.getElementById('tag-picker');
-let activeFilter = 'All';
+const authorFilter = document.getElementById('author-filter');
+const authorFilterBtn = document.getElementById('author-filter-btn');
+const authorFilterLabel = document.getElementById('author-filter-label');
+const authorFilterMenu = document.getElementById('author-filter-menu');
+
+function getUrlFilters() {
+  const params = new URLSearchParams(location.search);
+  return {
+    tag: params.get('tag') || 'All',
+    author: params.get('author') || 'All',
+  };
+}
+
+function updateUrlFilters() {
+  const params = new URLSearchParams(location.search);
+  if (activeFilter === 'All') params.delete('tag');
+  else params.set('tag', activeFilter);
+  if (activeAuthor === 'All') params.delete('author');
+  else params.set('author', activeAuthor);
+  const query = params.toString();
+  history.replaceState(null, '', location.pathname + (query ? `?${query}` : ''));
+}
+
+const initialUrlFilters = getUrlFilters();
+let activeFilter = initialUrlFilters.tag;
+let activeAuthor = initialUrlFilters.author;
 const fetchStatus = document.getElementById('fetch-status');
 const previewImg = document.getElementById('preview-img');
 const uploadDrop = document.getElementById('upload-drop');
@@ -186,7 +211,8 @@ function getAllTags() {
 }
 
 function tagCount(tag) {
-  return prototypes.filter((p) => p.type === tag).length;
+  const pool = activeAuthor === 'All' ? prototypes : prototypes.filter((p) => p.author === activeAuthor);
+  return pool.filter((p) => p.type === tag).length;
 }
 
 function sortTagsByCount(tags) {
@@ -198,7 +224,8 @@ function defaultTag() {
 }
 
 function authorCount(author) {
-  return prototypes.filter((p) => p.author === author).length;
+  const pool = activeFilter === 'All' ? prototypes : prototypes.filter((p) => p.type === activeFilter);
+  return pool.filter((p) => p.author === author).length;
 }
 
 function sortAuthorsByCount(authors) {
@@ -475,7 +502,8 @@ function renderFilterChips() {
     return chip;
   };
 
-  filterBar.appendChild(makeChip('All', 'All', prototypes.length));
+  const pool = activeAuthor === 'All' ? prototypes : prototypes.filter((p) => p.author === activeAuthor);
+  filterBar.appendChild(makeChip('All', 'All', pool.length));
 
   for (const tag of usedTags) {
     filterBar.appendChild(makeChip(tag, tag, tagCount(tag)));
@@ -483,6 +511,35 @@ function renderFilterChips() {
 
   if (activeFilter !== 'All' && !usedTags.includes(activeFilter)) {
     activeFilter = 'All';
+  }
+}
+
+function renderAuthorFilterMenu() {
+  authorFilterLabel.textContent = activeAuthor === 'All' ? 'All' : activeAuthor;
+  authorFilter.classList.toggle('active', activeAuthor !== 'All');
+
+  authorFilterMenu.innerHTML = '';
+
+  const makeOption = (label, value, count, avatar) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'author-filter-option' + (activeAuthor === value ? ' active' : '');
+    btn.dataset.author = value;
+    btn.innerHTML = `${avatar || ''}<span>${label}</span><span class="author-filter-option-count">${count}</span>`;
+    return btn;
+  };
+
+  const allPool = activeFilter === 'All' ? prototypes : prototypes.filter((p) => p.type === activeFilter);
+  authorFilterMenu.appendChild(makeOption('All', 'All', allPool.length, ''));
+
+  for (const author of sortAuthorsByCount(settings.authors)) {
+    authorFilterMenu.appendChild(makeOption(author, author, authorCount(author), avatarHtml(author)));
+  }
+
+  if (settingsLoaded && activeAuthor !== 'All' && !settings.authors.includes(activeAuthor)) {
+    activeAuthor = 'All';
+    authorFilterLabel.textContent = 'All';
+    authorFilter.classList.remove('active');
   }
 }
 
@@ -696,9 +753,11 @@ function formatDate(iso) {
 function render() {
   emptyState.hidden = prototypes.length > 0;
   renderFilterChips();
+  renderAuthorFilterMenu();
 
-  const visible =
+  let visible =
     activeFilter === 'All' ? prototypes : prototypes.filter((p) => p.type === activeFilter);
+  if (activeAuthor !== 'All') visible = visible.filter((p) => p.author === activeAuthor);
 
   if (viewMode === 'table') {
     renderTableView(visible);
@@ -783,7 +842,7 @@ function renderGridView(visible) {
 
   grid.innerHTML = '';
 
-  const dragEnabled = activeFilter === 'All';
+  const dragEnabled = activeFilter === 'All' && activeAuthor === 'All';
 
   for (const p of visible) {
     const card = document.createElement('div');
@@ -1045,10 +1104,33 @@ filterBar.addEventListener('click', (e) => {
   const btn = e.target.closest('.filter-chip');
   if (!btn) return;
   activeFilter = btn.dataset.filter;
-  for (const chip of filterBar.querySelectorAll('.filter-chip')) {
-    chip.classList.toggle('active', chip === btn);
-  }
+  updateUrlFilters();
   render();
+});
+
+authorFilterBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isOpen = !authorFilterMenu.hidden;
+  authorFilterMenu.hidden = isOpen;
+  authorFilter.classList.toggle('open', !isOpen);
+  authorFilterBtn.setAttribute('aria-expanded', String(!isOpen));
+});
+
+authorFilterMenu.addEventListener('click', (e) => {
+  const btn = e.target.closest('.author-filter-option');
+  if (!btn) return;
+  activeAuthor = btn.dataset.author;
+  authorFilterMenu.hidden = true;
+  authorFilter.classList.remove('open');
+  updateUrlFilters();
+  render();
+});
+
+document.addEventListener('click', (e) => {
+  if (!authorFilterMenu.hidden && !e.target.closest('#author-filter')) {
+    authorFilterMenu.hidden = true;
+    authorFilter.classList.remove('open');
+  }
 });
 
 const cardSizeInput = document.getElementById('card-size');

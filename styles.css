@@ -77,12 +77,110 @@ body {
   z-index: 1;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px;
+}
+
 .page-intro h1 {
   font-size: 40px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1;
-  margin: 0 0 8px;
+  margin: 0;
+}
+
+.author-filter {
+  position: relative;
+}
+
+.author-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-light);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.author-filter-btn:hover {
+  border-color: #c7d0dc;
+  color: var(--ink);
+}
+
+.author-filter.active .author-filter-btn {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(83, 58, 253, 0.06);
+}
+
+.author-filter-btn svg {
+  width: 10px;
+  height: 6px;
+  flex-shrink: 0;
+  transition: transform 0.12s ease;
+}
+
+.author-filter.open .author-filter-btn svg {
+  transform: rotate(180deg);
+}
+
+.author-filter-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  z-index: 20;
+}
+
+.author-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.author-filter-option:hover {
+  background: #f4f6f9;
+}
+
+.author-filter-option.active {
+  background: rgba(83, 58, 253, 0.08);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.author-filter-option-count {
+  margin-left: auto;
+  color: var(--ink-light);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .page-intro p {
