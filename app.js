@@ -1026,12 +1026,79 @@ function renderGridView(visible) {
   flipAnimate(prevRects);
 }
 
+const FLIP_DURATION_MS = 240;
+const FLIP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+function animateCardCreate(card) {
+  card.classList.add('card-new');
+
+  const rect = card.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  const r = 12;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const uid = 'card-ring-' + Math.random().toString(36).slice(2, 8);
+
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'card-draw-ring');
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+
+  const defs = document.createElementNS(svgNS, 'defs');
+  const gradient = document.createElementNS(svgNS, 'linearGradient');
+  gradient.setAttribute('id', uid);
+  gradient.setAttribute('x1', '0');
+  gradient.setAttribute('y1', '0');
+  gradient.setAttribute('x2', '1');
+  gradient.setAttribute('y2', '1');
+  [
+    ['0%', '#ff4785'],
+    ['25%', '#ffb86b'],
+    ['50%', '#35d07f'],
+    ['75%', '#4dabf7'],
+    ['100%', '#9b8afb'],
+  ].forEach(([offset, color]) => {
+    const stop = document.createElementNS(svgNS, 'stop');
+    stop.setAttribute('offset', offset);
+    stop.setAttribute('stop-color', color);
+    gradient.appendChild(stop);
+  });
+  defs.appendChild(gradient);
+  svg.appendChild(defs);
+
+  const rectEl = document.createElementNS(svgNS, 'rect');
+  rectEl.setAttribute('x', 1);
+  rectEl.setAttribute('y', 1);
+  rectEl.setAttribute('width', Math.max(0, w - 2));
+  rectEl.setAttribute('height', Math.max(0, h - 2));
+  rectEl.setAttribute('rx', r);
+  rectEl.setAttribute('ry', r);
+  rectEl.setAttribute('stroke', `url(#${uid})`);
+  svg.appendChild(rectEl);
+  card.appendChild(svg);
+
+  const length = rectEl.getTotalLength();
+  rectEl.style.strokeDasharray = String(length);
+  rectEl.style.strokeDashoffset = String(length);
+
+  requestAnimationFrame(() => {
+    rectEl.style.transition = `stroke-dashoffset ${FLIP_DURATION_MS}ms ${FLIP_EASING}`;
+    rectEl.style.strokeDashoffset = '0';
+  });
+
+  setTimeout(() => card.classList.add('card-new-fill'), FLIP_DURATION_MS * 0.55);
+  setTimeout(() => svg.classList.add('ring-out'), FLIP_DURATION_MS);
+  setTimeout(() => {
+    svg.remove();
+    card.classList.remove('card-new', 'card-new-fill');
+  }, FLIP_DURATION_MS + 200);
+}
+
 function flipAnimate(prevRects) {
   for (const el of grid.children) {
     if (el.dataset.id === justCreatedId) {
       justCreatedId = null;
-      el.classList.add('card-new');
-      setTimeout(() => el.classList.remove('card-new'), 650);
+      animateCardCreate(el);
       continue;
     }
   }
@@ -1052,7 +1119,7 @@ function flipAnimate(prevRects) {
     el.style.transition = 'none';
     el.style.transform = `translate(${dx}px, ${dy}px)`;
     requestAnimationFrame(() => {
-      el.style.transition = 'transform 0.35s cubic-bezier(0.2, 0, 0.2, 1)';
+      el.style.transition = `transform ${FLIP_DURATION_MS}ms ${FLIP_EASING}`;
       el.style.transform = '';
       el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
     });
