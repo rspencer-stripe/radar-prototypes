@@ -166,7 +166,7 @@ body {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
 }
 
 .author-filter-btn:hover {
@@ -184,7 +184,7 @@ body {
   width: 10px;
   height: 6px;
   flex-shrink: 0;
-  transition: transform 0.12s ease;
+  transition: transform 0.18s ease;
 }
 
 .author-filter.open .author-filter-btn svg {
@@ -286,7 +286,7 @@ body {
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
 .filter-chip:hover {
@@ -339,7 +339,7 @@ body {
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   transform: perspective(800px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(0);
-  transition: box-shadow 0.15s ease, transform 0.12s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -363,6 +363,56 @@ body {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+.card.card-new {
+  animation: card-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: 50% 0%;
+}
+
+.card.card-new .card-thumb,
+.card.card-new .card-body {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 320ms ease, transform 320ms ease;
+}
+
+.card.card-new.card-new-fill .card-thumb,
+.card.card-new.card-new-fill .card-body {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes card-rise {
+  from {
+    transform: scaleY(0.05);
+    opacity: 0.6;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.card-draw-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 1;
+  transition: opacity 260ms ease;
+}
+
+.card-draw-ring.ring-out {
+  opacity: 0;
+}
+
+.card-draw-ring rect {
+  fill: none;
+  stroke-width: 2px;
 }
 
 .card-thumb {
@@ -468,7 +518,7 @@ body {
 
 .card-actions .icon-btn {
   opacity: 0;
-  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+  transition: opacity 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
 
 .card:hover .card-actions .icon-btn,
@@ -478,6 +528,60 @@ body {
 
 .card.pinned {
   border-color: rgba(99, 91, 255, 0.35);
+}
+
+body.hide-thumbs .card {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+}
+
+body.hide-thumbs .card-thumb {
+  width: 36px;
+  height: 36px;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border-bottom: none;
+  flex-shrink: 0;
+}
+
+body.hide-thumbs .card-thumb .placeholder-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+body.hide-thumbs .card-thumb .placeholder-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+body.hide-thumbs .card-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+body.hide-thumbs .card-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body.hide-thumbs .card-meta {
+  flex-shrink: 0;
+}
+
+body.hide-thumbs .type-badge {
+  display: none;
+}
+
+body.hide-thumbs .card-actions {
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .card[draggable="true"] {
@@ -528,7 +632,7 @@ body {
   cursor: pointer;
   font-size: 15px;
   box-shadow: var(--shadow-sm);
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
 
 .icon-btn:active {
@@ -577,7 +681,7 @@ body {
   border-radius: 8px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition: background 0.18s ease, border-color 0.18s ease;
 }
 
 .btn svg {
@@ -794,7 +898,7 @@ body {
   background: var(--surface);
   color: var(--ink-light);
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
 
 .tag-pill:hover {
@@ -819,7 +923,7 @@ body {
   width: 16px;
   height: 16px;
   opacity: 0.4;
-  transition: opacity 0.12s ease, color 0.12s ease;
+  transition: opacity 0.18s ease, color 0.18s ease;
 }
 
 .tag-pill-delete svg {
@@ -894,7 +998,7 @@ body {
   color: var(--ink-light);
   background: var(--surface-muted);
   cursor: pointer;
-  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
 }
 
 .upload-drop:hover,
@@ -941,7 +1045,7 @@ body {
   cursor: pointer;
   text-decoration: underline;
   text-decoration-color: transparent;
-  transition: color 0.12s ease, text-decoration-color 0.12s ease;
+  transition: color 0.18s ease, text-decoration-color 0.18s ease;
 }
 
 .upload-replace-link:hover {
@@ -1069,6 +1173,7 @@ body {
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
+  transition: filter 0.18s ease;
 }
 
 .card-meta .avatar {
@@ -1107,6 +1212,7 @@ body {
   cursor: pointer;
   font-size: 13px;
   line-height: 1;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .settings-pill-remove:hover {
@@ -1160,7 +1266,7 @@ body {
   background: transparent;
   color: var(--ink-light);
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .view-toggle-btn.active {
@@ -1208,6 +1314,7 @@ body {
   color: var(--ink);
   text-decoration: none;
   font-weight: 500;
+  transition: color 0.18s ease;
 }
 
 .table-name-link:hover {

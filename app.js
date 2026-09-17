@@ -49,6 +49,7 @@ const uploadRemove = document.getElementById('upload-remove');
 
 let lastScrapedLink = '';
 let modalSession = 0;
+let justCreatedId = null;
 
 let settings = { authors: [], tags: [], authorPhotos: {} };
 
@@ -901,15 +902,15 @@ function renderGridView(visible) {
     card.dataset.pinned = p.pinned ? '1' : '0';
 
     const thumb = document.createElement('div');
-    thumb.className = 'card-thumb' + (p.imageUrl ? '' : ' placeholder');
-    if (p.imageUrl) {
+    if (showThumbs && p.imageUrl) {
+      thumb.className = 'card-thumb';
       const img = document.createElement('img');
       img.src = p.imageUrl;
       img.alt = p.name;
       thumb.appendChild(img);
     } else {
       const { icon, className } = placeholderFor(p);
-      thumb.classList.add(className);
+      thumb.className = 'card-thumb placeholder ' + className;
       thumb.innerHTML = `<div class="placeholder-icon">${ICONS[icon]}</div>`;
     }
 
@@ -1025,9 +1026,86 @@ function renderGridView(visible) {
   flipAnimate(prevRects);
 }
 
+const SIBLING_SHIFT_MS = 150;
+const CARD_NEW_DRAW_MS = 420;
+
+function animateCardCreate(card) {
+  card.classList.add('card-new');
+
+  const rect = card.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  const r = 12;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const uid = 'card-ring-' + Math.random().toString(36).slice(2, 8);
+
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'card-draw-ring');
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+
+  const defs = document.createElementNS(svgNS, 'defs');
+  const gradient = document.createElementNS(svgNS, 'linearGradient');
+  gradient.setAttribute('id', uid);
+  gradient.setAttribute('x1', '0');
+  gradient.setAttribute('y1', '0');
+  gradient.setAttribute('x2', '1');
+  gradient.setAttribute('y2', '1');
+  [
+    ['0%', '#ff4785'],
+    ['25%', '#ffb86b'],
+    ['50%', '#35d07f'],
+    ['75%', '#4dabf7'],
+    ['100%', '#9b8afb'],
+  ].forEach(([offset, color]) => {
+    const stop = document.createElementNS(svgNS, 'stop');
+    stop.setAttribute('offset', offset);
+    stop.setAttribute('stop-color', color);
+    gradient.appendChild(stop);
+  });
+  defs.appendChild(gradient);
+  svg.appendChild(defs);
+
+  const rectEl = document.createElementNS(svgNS, 'rect');
+  rectEl.setAttribute('x', 1);
+  rectEl.setAttribute('y', 1);
+  rectEl.setAttribute('width', Math.max(0, w - 2));
+  rectEl.setAttribute('height', Math.max(0, h - 2));
+  rectEl.setAttribute('rx', r);
+  rectEl.setAttribute('ry', r);
+  rectEl.setAttribute('stroke', `url(#${uid})`);
+  svg.appendChild(rectEl);
+  card.appendChild(svg);
+
+  const length = rectEl.getTotalLength();
+  rectEl.style.strokeDasharray = String(length);
+  rectEl.style.strokeDashoffset = String(length);
+
+  requestAnimationFrame(() => {
+    rectEl.style.transition = `stroke-dashoffset ${CARD_NEW_DRAW_MS}ms cubic-bezier(0.45, 0, 0.2, 1)`;
+    rectEl.style.strokeDashoffset = '0';
+  });
+
+  setTimeout(() => card.classList.add('card-new-fill'), CARD_NEW_DRAW_MS * 0.55);
+  setTimeout(() => svg.classList.add('ring-out'), CARD_NEW_DRAW_MS);
+  setTimeout(() => {
+    svg.remove();
+    card.classList.remove('card-new', 'card-new-fill');
+  }, CARD_NEW_DRAW_MS + 260);
+}
+
 function flipAnimate(prevRects) {
+  for (const el of grid.children) {
+    if (el.dataset.id === justCreatedId) {
+      justCreatedId = null;
+      animateCardCreate(el);
+      continue;
+    }
+  }
+
   if (!prevRects.size) return;
   for (const el of grid.children) {
+    if (el.classList.contains('card-new')) continue;
     const prev = prevRects.get(el.dataset.id);
     if (!prev) {
       el.classList.add('card-enter');
@@ -1041,7 +1119,7 @@ function flipAnimate(prevRects) {
     el.style.transition = 'none';
     el.style.transform = `translate(${dx}px, ${dy}px)`;
     requestAnimationFrame(() => {
-      el.style.transition = 'transform 0.35s cubic-bezier(0.2, 0, 0.2, 1)';
+      el.style.transition = `transform ${SIBLING_SHIFT_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`;
       el.style.transform = '';
       el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
     });
@@ -1122,11 +1200,15 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify(payload),
     });
   } else {
-    await fetch('/api/prototypes', {
+    const res = await fetch('/api/prototypes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if (res.ok) {
+      const created = await res.json();
+      justCreatedId = String(created.id);
+    }
   }
 
   closeModal();
@@ -1142,6 +1224,7 @@ modalOverlay.addEventListener('click', (e) => {
 });
 
 fieldLink.addEventListener('blur', scrapeLink);
+fieldLink.addEventListener('paste', () => setTimeout(scrapeLink, 0));
 
 uploadReplace.addEventListener('click', () => fieldUpload.click());
 uploadReload.addEventListener('click', rescrapeLink);
@@ -1195,13 +1278,24 @@ const viewToggle = document.getElementById('view-toggle');
 const cardSizeSection = document.getElementById('card-size-section');
 let viewMode = localStorage.getItem('viewMode') || 'grid';
 
+const thumbsToggle = document.getElementById('thumbs-toggle');
+let showThumbs = localStorage.getItem('showThumbs') !== 'false';
+
 function applyViewMode() {
   grid.hidden = viewMode !== 'grid';
   tableWrap.hidden = viewMode !== 'table';
-  cardSizeSection.hidden = viewMode !== 'grid';
+  cardSizeSection.hidden = viewMode !== 'grid' || !showThumbs;
   for (const btn of viewToggle.querySelectorAll('.view-toggle-btn')) {
     btn.classList.toggle('active', btn.dataset.view === viewMode);
   }
+}
+
+function applyThumbsMode() {
+  document.body.classList.toggle('hide-thumbs', !showThumbs);
+  for (const btn of thumbsToggle.querySelectorAll('.view-toggle-btn')) {
+    btn.classList.toggle('active', (btn.dataset.thumbs === 'show') === showThumbs);
+  }
+  applyViewMode();
 }
 
 viewToggle.addEventListener('click', (e) => {
@@ -1213,9 +1307,24 @@ viewToggle.addEventListener('click', (e) => {
   render();
 });
 
+thumbsToggle.addEventListener('click', (e) => {
+  const btn = e.target.closest('.view-toggle-btn');
+  if (!btn) return;
+  showThumbs = btn.dataset.thumbs === 'show';
+  localStorage.setItem('showThumbs', String(showThumbs));
+  applyThumbsMode();
+  applyCardColumns();
+  render();
+});
+
 applyViewMode();
+applyThumbsMode();
 
 function applyCardColumns() {
+  if (!showThumbs) {
+    grid.style.gridTemplateColumns = '1fr';
+    return;
+  }
   const containerWidth = grid.clientWidth;
   const desired = Number(cardSizeInput.value);
   const columns = Math.max(1, Math.round((containerWidth + GRID_GAP) / (desired + GRID_GAP)));
