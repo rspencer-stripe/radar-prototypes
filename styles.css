@@ -282,12 +282,12 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--ink-light);
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 6px 14px;
+  padding: 3px 10px;
   border-radius: 999px;
   margin-bottom: 6px;
 }
