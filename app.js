@@ -20,12 +20,38 @@ const authorFilterBtn = document.getElementById('author-filter-btn');
 const authorFilterLabel = document.getElementById('author-filter-label');
 const authorFilterMenu = document.getElementById('author-filter-menu');
 
+const fieldLinkWrap = document.getElementById('field-link-wrap');
+const fieldNameWrap = document.getElementById('field-name-wrap');
+const fieldAuthorWrap = document.getElementById('field-author-wrap');
+const fieldLinkError = document.getElementById('field-link-error');
+const fieldNameError = document.getElementById('field-name-error');
+const fieldAuthorError = document.getElementById('field-author-error');
+const saveBtn = document.getElementById('save-btn');
+
 const confirmOverlay = document.getElementById('confirm-overlay');
 const confirmTitle = document.getElementById('confirm-title');
 const confirmBody = document.getElementById('confirm-body');
 const confirmOkBtn = document.getElementById('confirm-ok');
 const confirmCancelBtn = document.getElementById('confirm-cancel');
 const toastStack = document.getElementById('toast-stack');
+
+const cardSizeInput = document.getElementById('card-size');
+const settingsGear = document.getElementById('settings-gear');
+const settingsPanel = document.getElementById('settings-panel');
+const tableWrap = document.getElementById('table-wrap');
+const viewToggle = document.getElementById('view-toggle');
+const cardSizeSection = document.getElementById('card-size-section');
+const thumbsToggle = document.getElementById('thumbs-toggle');
+const themeToggle = document.getElementById('theme-toggle');
+
+const authorsAddInput = document.getElementById('authors-add-input');
+const authorsAddBtn = document.getElementById('authors-add-btn');
+const tagsAddInput = document.getElementById('tags-add-input');
+const tagsAddBtn = document.getElementById('tags-add-btn');
+
+const TRANSITION_MS = 180;
+const GRID_GAP = 22;
+const HIDE_THUMBS_CARD_WIDTH = 320;
 
 function showToast(message, type = 'error') {
   const toast = document.createElement('div');
@@ -35,7 +61,7 @@ function showToast(message, type = 'error') {
   requestAnimationFrame(() => toast.classList.add('open'));
   setTimeout(() => {
     toast.classList.remove('open');
-    setTimeout(() => toast.remove(), 180);
+    setTimeout(() => toast.remove(), TRANSITION_MS);
   }, 4000);
 }
 
@@ -57,7 +83,7 @@ function closeConfirmDialog(result) {
   confirmOverlay.classList.remove('open');
   setTimeout(() => {
     confirmOverlay.hidden = true;
-  }, 180);
+  }, TRANSITION_MS);
   if (confirmResolve) {
     confirmResolve(result);
     confirmResolve = null;
@@ -623,6 +649,11 @@ function renderAuthorFilterMenu() {
   }
 }
 
+function resetFetchStatus() {
+  fetchStatus.textContent = '';
+  fetchStatus.classList.remove('error');
+}
+
 function showPreview(url) {
   if (url) {
     previewImg.src = url;
@@ -889,11 +920,7 @@ function render() {
   emptyState.hidden = visible.length > 0;
   const filtered = activeFilter !== 'All' || activeAuthor !== 'All';
   emptyStateText.textContent =
-    prototypes.length === 0
-      ? 'Nothing here yet.'
-      : filtered
-      ? 'No items match these filters.'
-      : 'Nothing here yet.';
+    prototypes.length > 0 && filtered ? 'No items match these filters.' : 'Nothing here yet.';
   emptyAddBtn.hidden = prototypes.length > 0;
   emptyClearFiltersBtn.hidden = prototypes.length === 0 || !filtered;
 
@@ -1232,8 +1259,7 @@ function startStrokeWave(card) {
 function openModal(prototype) {
   modalSession += 1;
   form.reset();
-  fetchStatus.textContent = '';
-  fetchStatus.classList.remove('error');
+  resetFetchStatus();
   clearFieldErrors();
   lastScrapedLink = '';
   tagPickerAdding = false;
@@ -1268,7 +1294,7 @@ function closeModal() {
   modalOverlay.classList.remove('open');
   setTimeout(() => {
     modalOverlay.hidden = true;
-  }, 180);
+  }, TRANSITION_MS);
 }
 
 async function deletePrototype(id) {
@@ -1282,8 +1308,8 @@ async function deletePrototype(id) {
   const card = grid.querySelector(`[data-id="${id}"]`);
   let fadeMs = 0;
   if (card) {
-    fadeMs = 180;
-    card.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
+    fadeMs = TRANSITION_MS;
+    card.style.transition = `opacity ${TRANSITION_MS}ms ease, transform ${TRANSITION_MS}ms ease`;
     card.style.opacity = '0';
     card.style.transform = 'scale(0.96)';
   }
@@ -1304,14 +1330,6 @@ async function deletePrototype(id) {
     await forceReload();
   }
 }
-
-const fieldLinkWrap = document.getElementById('field-link-wrap');
-const fieldNameWrap = document.getElementById('field-name-wrap');
-const fieldAuthorWrap = document.getElementById('field-author-wrap');
-const fieldLinkError = document.getElementById('field-link-error');
-const fieldNameError = document.getElementById('field-name-error');
-const fieldAuthorError = document.getElementById('field-author-error');
-const saveBtn = document.getElementById('save-btn');
 
 function setFieldError(wrap, errorEl, message) {
   wrap.classList.toggle('invalid', !!message);
@@ -1429,8 +1447,7 @@ uploadReload.addEventListener('click', rescrapeLink);
 uploadRemove.addEventListener('click', () => {
   fieldImage.value = '';
   showPreview('');
-  fetchStatus.textContent = '';
-  fetchStatus.classList.remove('error');
+  resetFetchStatus();
 });
 
 filterBar.addEventListener('click', (e) => {
@@ -1455,7 +1472,7 @@ function closeAuthorMenu() {
   authorFilterBtn.setAttribute('aria-expanded', 'false');
   setTimeout(() => {
     authorFilterMenu.hidden = true;
-  }, 180);
+  }, TRANSITION_MS);
 }
 
 authorFilterBtn.addEventListener('click', (e) => {
@@ -1479,17 +1496,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-const cardSizeInput = document.getElementById('card-size');
-const settingsGear = document.getElementById('settings-gear');
-const settingsPanel = document.getElementById('settings-panel');
-const GRID_GAP = 22;
-
-const tableWrap = document.getElementById('table-wrap');
-const viewToggle = document.getElementById('view-toggle');
-const cardSizeSection = document.getElementById('card-size-section');
 let viewMode = localStorage.getItem('viewMode') || 'grid';
-
-const thumbsToggle = document.getElementById('thumbs-toggle');
 let showThumbs = localStorage.getItem('showThumbs') !== 'false';
 
 function applyViewMode() {
@@ -1531,8 +1538,6 @@ thumbsToggle.addEventListener('click', (e) => {
 applyViewMode();
 applyThumbsMode();
 
-const HIDE_THUMBS_CARD_WIDTH = 320;
-
 function applyCardColumns() {
   const containerWidth = grid.clientWidth;
   const desired = showThumbs ? Number(cardSizeInput.value) : HIDE_THUMBS_CARD_WIDTH;
@@ -1570,7 +1575,7 @@ function closeSettingsPanel() {
   settingsPanel.classList.remove('open');
   setTimeout(() => {
     settingsPanel.hidden = true;
-  }, 180);
+  }, TRANSITION_MS);
 }
 
 settingsGear.addEventListener('click', (e) => {
@@ -1582,11 +1587,6 @@ settingsGear.addEventListener('click', (e) => {
 document.addEventListener('click', (e) => {
   if (!settingsPanel.hidden && !e.target.closest('#settings-dock')) closeSettingsPanel();
 });
-
-const authorsAddInput = document.getElementById('authors-add-input');
-const authorsAddBtn = document.getElementById('authors-add-btn');
-const tagsAddInput = document.getElementById('tags-add-input');
-const tagsAddBtn = document.getElementById('tags-add-btn');
 
 authorsAddInput.addEventListener('input', () => {
   if (authorsAddInput.value && !authorsAddInput.value.startsWith('@')) {
@@ -1651,8 +1651,6 @@ async function loadSettings() {
   render();
   await syncTagsFromPrototypes();
 }
-
-const themeToggle = document.getElementById('theme-toggle');
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
