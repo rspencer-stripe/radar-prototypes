@@ -1330,6 +1330,25 @@ async function loadSettings() {
   await syncTagsFromPrototypes();
 }
 
+const themeToggle = document.getElementById('theme-toggle');
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  for (const btn of themeToggle.querySelectorAll('.view-toggle-btn')) {
+    btn.classList.toggle('active', btn.dataset.theme === theme);
+  }
+}
+
+const savedTheme = localStorage.getItem('theme');
+applyTheme(savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : 'auto');
+
+themeToggle.addEventListener('click', (e) => {
+  const btn = e.target.closest('.view-toggle-btn');
+  if (!btn) return;
+  localStorage.setItem('theme', btn.dataset.theme);
+  applyTheme(btn.dataset.theme);
+});
+
 loadSettings();
 loadPrototypes();
 
