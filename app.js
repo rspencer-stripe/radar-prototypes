@@ -48,6 +48,7 @@ const uploadReload = document.getElementById('upload-reload');
 const uploadRemove = document.getElementById('upload-remove');
 
 let lastScrapedLink = '';
+let modalSession = 0;
 
 let settings = { authors: [], tags: [], authorPhotos: {} };
 
@@ -577,6 +578,7 @@ async function scrapeLink() {
   }
 
   lastScrapedLink = url;
+  const session = modalSession;
 
   if (isDocLink(url)) {
     fetchStatus.textContent = "Doc links usually block screenshots — upload one below instead.";
@@ -594,6 +596,7 @@ async function scrapeLink() {
     });
     if (!res.ok) throw new Error('scrape failed');
     const data = await res.json();
+    if (session !== modalSession) return;
 
     if (data.name && !fieldName.value) fieldName.value = data.name;
     if (data.imageUrl) {
@@ -604,6 +607,7 @@ async function scrapeLink() {
       ? 'Preview loaded.'
       : 'Fetched, but no screenshot available — you can upload one below.';
   } catch {
+    if (session !== modalSession) return;
     fetchStatus.textContent = "Couldn't fetch a preview — you can fill in the fields manually or upload a screenshot.";
     fetchStatus.classList.add('error');
   }
@@ -621,6 +625,7 @@ async function rescrapeLink() {
 
   fetchStatus.textContent = 'Reloading page for a fresher screenshot…';
   fetchStatus.classList.remove('error');
+  const session = modalSession;
 
   try {
     const res = await fetch('/api/scrape', {
@@ -630,6 +635,7 @@ async function rescrapeLink() {
     });
     if (!res.ok) throw new Error('scrape failed');
     const data = await res.json();
+    if (session !== modalSession) return;
 
     if (data.imageUrl) {
       fieldImage.value = data.imageUrl;
@@ -639,6 +645,7 @@ async function rescrapeLink() {
       fetchStatus.textContent = 'Reloaded, but no screenshot came back.';
     }
   } catch {
+    if (session !== modalSession) return;
     fetchStatus.textContent = "Couldn't reload the preview.";
     fetchStatus.classList.add('error');
   }
@@ -671,13 +678,16 @@ async function applyUploadedFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
   fetchStatus.textContent = 'Uploading screenshot…';
   fetchStatus.classList.remove('error');
+  const session = modalSession;
   try {
     const dataUrl = await resizeImageToDataUrlMaxWidth(file, 1600, 0.85);
     const url = await uploadImage(dataUrl);
+    if (session !== modalSession) return;
     fieldImage.value = url;
     showPreview(url);
     fetchStatus.textContent = 'Uploaded screenshot.';
   } catch {
+    if (session !== modalSession) return;
     fetchStatus.textContent = "Couldn't upload that image.";
     fetchStatus.classList.add('error');
   }
@@ -1039,6 +1049,7 @@ function flipAnimate(prevRects) {
 }
 
 function openModal(prototype) {
+  modalSession += 1;
   form.reset();
   fetchStatus.textContent = '';
   fetchStatus.classList.remove('error');
@@ -1060,6 +1071,7 @@ function openModal(prototype) {
     modalTitle.textContent = 'Add item';
     fieldId.value = '';
     fieldType.value = defaultTag();
+    fieldImage.value = '';
     const lastAuthor = localStorage.getItem('lastAuthor');
     if (lastAuthor) fieldAuthor.value = lastAuthor;
     showPreview('');
