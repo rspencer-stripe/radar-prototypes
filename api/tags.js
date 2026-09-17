@@ -1,6 +1,7 @@
 const { renameTag, reassignTag } = require('../lib/store');
+const { withErrorHandling } = require('../lib/handler');
 
-module.exports = async (req, res) => {
+module.exports = withErrorHandling(async (req, res) => {
   if (req.method === 'PUT') {
     const { oldTag, newTag } = req.body || {};
     if (!oldTag || !newTag) {
@@ -24,4 +25,4 @@ module.exports = async (req, res) => {
   }
 
   res.status(405).json({ error: 'method not allowed' });
-};
+});

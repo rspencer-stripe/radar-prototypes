@@ -755,12 +755,17 @@ async function syncTagsFromPrototypes() {
 
 async function loadPrototypes() {
   if (!modalOverlay.hidden) return;
-  const res = await fetch('/api/prototypes');
-  const next = await res.json();
-  const changed = JSON.stringify(next) !== JSON.stringify(prototypes);
-  prototypes = next;
-  if (changed) render();
-  if (settingsLoaded) await syncTagsFromPrototypes();
+  try {
+    const res = await fetch('/api/prototypes');
+    if (!res.ok) return;
+    const next = await res.json();
+    const changed = JSON.stringify(next) !== JSON.stringify(prototypes);
+    prototypes = next;
+    if (changed) render();
+    if (settingsLoaded) await syncTagsFromPrototypes();
+  } catch (err) {
+    console.error('failed to load prototypes', err);
+  }
 }
 
 async function togglePin(p) {
@@ -774,6 +779,7 @@ async function togglePin(p) {
 
 async function forceReload() {
   const res = await fetch('/api/prototypes');
+  if (!res.ok) return;
   prototypes = await res.json();
   render();
 }

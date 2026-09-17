@@ -1,6 +1,7 @@
 const { getPrototype, updatePrototype, deletePrototype } = require('../../lib/store');
+const { withErrorHandling } = require('../../lib/handler');
 
-module.exports = async (req, res) => {
+module.exports = withErrorHandling(async (req, res) => {
   const { id } = req.query;
 
   const existing = await getPrototype(id);
@@ -23,4 +24,4 @@ module.exports = async (req, res) => {
   }
 
   res.status(405).json({ error: 'method not allowed' });
-};
+});

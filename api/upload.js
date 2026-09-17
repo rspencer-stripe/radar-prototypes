@@ -1,5 +1,6 @@
 const { put } = require('@vercel/blob');
 const crypto = require('crypto');
+const { withErrorHandling } = require('../lib/handler');
 
 const EXT_BY_TYPE = {
   'image/jpeg': 'jpg',
@@ -8,7 +9,7 @@ const EXT_BY_TYPE = {
   'image/gif': 'gif',
 };
 
-module.exports = async (req, res) => {
+module.exports = withErrorHandling(async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method not allowed' });
     return;
@@ -33,4 +34,4 @@ module.exports = async (req, res) => {
   });
 
   res.status(200).json({ url });
-};
+});
