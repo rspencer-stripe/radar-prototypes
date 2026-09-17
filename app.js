@@ -91,11 +91,30 @@ function getAllTags() {
 }
 
 let tagPickerAdding = false;
+let renamingTag = null;
 
 function selectTag(tag) {
   fieldType.value = tag;
   tagPickerAdding = false;
   renderTagPicker();
+}
+
+async function renameTag(oldTag, newTag) {
+  const res = await fetch('/api/tags', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ oldTag, newTag }),
+  });
+  if (!res.ok) {
+    renderTagPicker();
+    return;
+  }
+  for (const p of prototypes) {
+    if (p.type === oldTag) p.type = newTag;
+  }
+  if (fieldType.value === oldTag) fieldType.value = newTag;
+  renderTagPicker();
+  render();
 }
 
 function renderTagPicker() {
@@ -105,11 +124,61 @@ function renderTagPicker() {
   if (selected && !tags.includes(selected)) tags.push(selected);
 
   for (const tag of tags) {
+    if (renamingTag === tag) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'tag-add-input';
+      input.value = tag;
+      const commitRename = () => {
+        const value = input.value.trim();
+        renamingTag = null;
+        if (value && value !== tag) renameTag(tag, value);
+        else renderTagPicker();
+      };
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commitRename();
+        } else if (e.key === 'Escape') {
+          renamingTag = null;
+          renderTagPicker();
+        }
+      });
+      input.addEventListener('blur', commitRename);
+      tagPicker.appendChild(input);
+      requestAnimationFrame(() => {
+        input.focus();
+        input.select();
+      });
+      continue;
+    }
+
     const pill = document.createElement('button');
     pill.type = 'button';
     pill.className = 'tag-pill' + (tag === selected ? ' active' : '');
-    pill.textContent = tag;
     pill.onclick = () => selectTag(tag);
+    pill.ondblclick = (e) => {
+      e.preventDefault();
+      renamingTag = tag;
+      renderTagPicker();
+    };
+
+    const label = document.createElement('span');
+    label.className = 'tag-pill-label';
+    label.textContent = tag;
+    pill.appendChild(label);
+
+    const editIcon = document.createElement('span');
+    editIcon.className = 'tag-pill-edit';
+    editIcon.innerHTML = ICONS.edit;
+    editIcon.setAttribute('aria-label', `Rename ${tag}`);
+    editIcon.onclick = (e) => {
+      e.stopPropagation();
+      renamingTag = tag;
+      renderTagPicker();
+    };
+    pill.appendChild(editIcon);
+
     tagPicker.appendChild(pill);
   }
 
@@ -343,9 +412,9 @@ function render() {
       deletePrototype(p.id);
     };
 
-    actions.appendChild(pinBtn);
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
+    actions.appendChild(pinBtn);
 
     const body = document.createElement('div');
     body.className = 'card-body';
@@ -410,6 +479,7 @@ function openModal(prototype) {
   fetchStatus.classList.remove('error');
   lastScrapedLink = '';
   tagPickerAdding = false;
+  renamingTag = null;
 
   if (prototype) {
     modalTitle.textContent = 'Edit item';
@@ -509,6 +579,17 @@ filterBar.addEventListener('click', (e) => {
     chip.classList.toggle('active', chip === btn);
   }
   render();
+});
+
+const cardSizeInput = document.getElementById('card-size');
+const savedCardSize = localStorage.getItem('cardSize');
+if (savedCardSize) {
+  document.documentElement.style.setProperty('--card-min', `${savedCardSize}px`);
+  cardSizeInput.value = savedCardSize;
+}
+cardSizeInput.addEventListener('input', () => {
+  document.documentElement.style.setProperty('--card-min', `${cardSizeInput.value}px`);
+  localStorage.setItem('cardSize', cardSizeInput.value);
 });
 
 modalOverlay.hidden = true;
