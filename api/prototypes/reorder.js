@@ -1,8 +1,6 @@
-const { sql, ensureTable, toClient } = require('../../lib/db');
+const { reorderPrototypes } = require('../../lib/store');
 
 module.exports = async (req, res) => {
-  await ensureTable();
-
   if (req.method !== 'PUT') {
     res.status(405).json({ error: 'method not allowed' });
     return;
@@ -14,10 +12,5 @@ module.exports = async (req, res) => {
     return;
   }
 
-  for (let i = 0; i < ids.length; i++) {
-    await sql`UPDATE prototypes SET sort_order = ${i} WHERE id = ${ids[i]}`;
-  }
-
-  const { rows } = await sql`SELECT * FROM prototypes ORDER BY pinned DESC, sort_order ASC`;
-  res.status(200).json(rows.map(toClient));
+  res.status(200).json(await reorderPrototypes(ids));
 };

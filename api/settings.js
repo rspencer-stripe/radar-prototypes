@@ -1,4 +1,4 @@
-const { getSettings, updateSettings } = require('../lib/db');
+const { getSettings, updateSettings } = require('../lib/store');
 
 module.exports = async (req, res) => {
   if (req.method === 'GET') {

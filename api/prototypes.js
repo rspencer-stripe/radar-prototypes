@@ -1,11 +1,8 @@
-const { sql, ensureTable, toClient } = require('../lib/db');
+const { listPrototypes, createPrototype } = require('../lib/store');
 
 module.exports = async (req, res) => {
-  await ensureTable();
-
   if (req.method === 'GET') {
-    const { rows } = await sql`SELECT * FROM prototypes ORDER BY pinned DESC, sort_order ASC`;
-    res.status(200).json(rows.map(toClient));
+    res.status(200).json(await listPrototypes());
     return;
   }
 
@@ -15,12 +12,7 @@ module.exports = async (req, res) => {
       res.status(400).json({ error: 'name and author are required' });
       return;
     }
-    const { rows } = await sql`
-      INSERT INTO prototypes (name, author, image_url, link, description, type, sort_order)
-      VALUES (${name}, ${author}, ${imageUrl || ''}, ${link || ''}, ${description || ''}, ${type || 'Prototype'}, -extract(epoch from now()))
-      RETURNING *
-    `;
-    res.status(201).json(toClient(rows[0]));
+    res.status(201).json(await createPrototype({ name, author, imageUrl, link, description, type }));
     return;
   }
 

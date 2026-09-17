@@ -117,10 +117,22 @@ function resizeImageToDataUrl(file, size) {
   });
 }
 
+async function uploadImage(dataUrl) {
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataUrl }),
+  });
+  if (!res.ok) throw new Error('upload failed');
+  const data = await res.json();
+  return data.url;
+}
+
 async function setAuthorPhoto(author, file) {
   if (!file || !file.type.startsWith('image/')) return;
   const dataUrl = await resizeImageToDataUrl(file, 96);
-  const nextPhotos = { ...settings.authorPhotos, [author]: dataUrl };
+  const url = await uploadImage(dataUrl);
+  const nextPhotos = { ...settings.authorPhotos, [author]: url };
   if (await saveSettings({ authorPhotos: nextPhotos })) {
     renderAuthorsList();
     render();
@@ -632,10 +644,24 @@ async function rescrapeLink() {
   }
 }
 
-function readFileAsDataUrl(file) {
+function resizeImageToDataUrlMaxWidth(file, maxWidth, quality) {
   return new Promise((resolve, reject) => {
+    const img = new Image();
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => {
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
@@ -643,11 +669,18 @@ function readFileAsDataUrl(file) {
 
 async function applyUploadedFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
-  const dataUrl = await readFileAsDataUrl(file);
-  fieldImage.value = dataUrl;
-  showPreview(dataUrl);
-  fetchStatus.textContent = 'Uploaded screenshot.';
+  fetchStatus.textContent = 'Uploading screenshot…';
   fetchStatus.classList.remove('error');
+  try {
+    const dataUrl = await resizeImageToDataUrlMaxWidth(file, 1600, 0.85);
+    const url = await uploadImage(dataUrl);
+    fieldImage.value = url;
+    showPreview(url);
+    fetchStatus.textContent = 'Uploaded screenshot.';
+  } catch {
+    fetchStatus.textContent = "Couldn't upload that image.";
+    fetchStatus.classList.add('error');
+  }
 }
 
 fieldUpload.addEventListener('change', () => applyUploadedFile(fieldUpload.files[0]));
@@ -1281,4 +1314,14 @@ async function loadSettings() {
 
 loadSettings();
 loadPrototypes();
-setInterval(loadPrototypes, 5000);
+
+let pollTimer = setInterval(loadPrototypes, 20000);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearInterval(pollTimer);
+  } else {
+    loadPrototypes();
+    pollTimer = setInterval(loadPrototypes, 20000);
+  }
+});
