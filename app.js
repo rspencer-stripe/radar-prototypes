@@ -1348,7 +1348,7 @@ thumbsToggle.addEventListener('click', (e) => {
 applyViewMode();
 applyThumbsMode();
 
-const HIDE_THUMBS_CARD_WIDTH = 300;
+const HIDE_THUMBS_CARD_WIDTH = 320;
 
 function applyCardColumns() {
   const containerWidth = grid.clientWidth;

@@ -560,7 +560,7 @@ body.hide-thumbs .card {
   flex-direction: row;
   align-items: center;
   gap: 14px;
-  padding: 10px 14px;
+  padding: 10px 44px 10px 14px;
 }
 
 body.hide-thumbs .card-thumb {
@@ -570,7 +570,6 @@ body.hide-thumbs .card-thumb {
   border-radius: 8px;
   border-bottom: none;
   flex-shrink: 0;
-  order: 1;
 }
 
 body.hide-thumbs .card-thumb .placeholder-icon {
@@ -590,8 +589,7 @@ body.hide-thumbs .card-body {
   padding: 0;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
-  order: 2;
+  gap: 8px;
 }
 
 body.hide-thumbs .card-name {
@@ -616,9 +614,8 @@ body.hide-thumbs .card .type-badge {
 }
 
 body.hide-thumbs .card-actions {
-  position: static;
-  order: 3;
-  flex-shrink: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 body.hide-thumbs .card:hover {
