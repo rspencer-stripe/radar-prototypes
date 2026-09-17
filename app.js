@@ -751,13 +751,14 @@ function formatDate(iso) {
 }
 
 function render() {
-  emptyState.hidden = prototypes.length > 0;
   renderFilterChips();
   renderAuthorFilterMenu();
 
   let visible =
     activeFilter === 'All' ? prototypes : prototypes.filter((p) => p.type === activeFilter);
   if (activeAuthor !== 'All') visible = visible.filter((p) => p.author === activeAuthor);
+
+  emptyState.hidden = visible.length > 0;
 
   if (viewMode === 'table') {
     renderTableView(visible);
