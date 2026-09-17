@@ -116,6 +116,14 @@ function sortTagsByCount(tags) {
   return [...tags].sort((a, b) => tagCount(b) - tagCount(a) || a.localeCompare(b));
 }
 
+function authorCount(author) {
+  return prototypes.filter((p) => p.author === author).length;
+}
+
+function sortAuthorsByCount(authors) {
+  return [...authors].sort((a, b) => authorCount(b) - authorCount(a) || a.localeCompare(b));
+}
+
 let tagPickerAdding = false;
 let renamingTag = null;
 
@@ -211,7 +219,7 @@ async function saveSettings(patch) {
 function renderAuthorsList() {
   const list = document.getElementById('authors-list');
   list.innerHTML = '';
-  for (const author of settings.authors) {
+  for (const author of sortAuthorsByCount(settings.authors)) {
     const pill = document.createElement('span');
     pill.className = 'settings-pill';
     pill.textContent = author;
@@ -367,18 +375,19 @@ function renderFilterChips() {
   const usedTags = sortTagsByCount(getAllTags());
 
   filterBar.innerHTML = '';
-  const allChip = document.createElement('button');
-  allChip.className = 'filter-chip' + (activeFilter === 'All' ? ' active' : '');
-  allChip.dataset.filter = 'All';
-  allChip.textContent = 'All';
-  filterBar.appendChild(allChip);
+
+  const makeChip = (label, filter, count) => {
+    const chip = document.createElement('button');
+    chip.className = 'filter-chip' + (activeFilter === filter ? ' active' : '');
+    chip.dataset.filter = filter;
+    chip.innerHTML = `${label}<span class="filter-chip-count">${count}</span>`;
+    return chip;
+  };
+
+  filterBar.appendChild(makeChip('All', 'All', prototypes.length));
 
   for (const tag of usedTags) {
-    const chip = document.createElement('button');
-    chip.className = 'filter-chip' + (activeFilter === tag ? ' active' : '');
-    chip.dataset.filter = tag;
-    chip.textContent = tag;
-    filterBar.appendChild(chip);
+    filterBar.appendChild(makeChip(tag, tag, tagCount(tag)));
   }
 
   if (activeFilter !== 'All' && !usedTags.includes(activeFilter)) {
@@ -449,17 +458,44 @@ function readFileAsDataUrl(file) {
   });
 }
 
-fieldUpload.addEventListener('change', async () => {
-  const file = fieldUpload.files[0];
-  if (!file) return;
+async function applyUploadedFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
   const dataUrl = await readFileAsDataUrl(file);
   fieldImage.value = dataUrl;
   showPreview(dataUrl);
   fetchStatus.textContent = 'Uploaded screenshot.';
   fetchStatus.classList.remove('error');
+}
+
+fieldUpload.addEventListener('change', () => applyUploadedFile(fieldUpload.files[0]));
+
+uploadDrop.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadDrop.classList.add('drag-over');
+});
+uploadDrop.addEventListener('dragleave', () => uploadDrop.classList.remove('drag-over'));
+uploadDrop.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadDrop.classList.remove('drag-over');
+  applyUploadedFile(e.dataTransfer.files[0]);
 });
 
 let prototypes = [];
+let dragId = null;
+
+function reorderPrototype(draggedId, targetId) {
+  const fromIndex = prototypes.findIndex((p) => p.id === draggedId);
+  const toIndex = prototypes.findIndex((p) => p.id === targetId);
+  if (fromIndex === -1 || toIndex === -1) return;
+  const [moved] = prototypes.splice(fromIndex, 1);
+  prototypes.splice(prototypes.findIndex((p) => p.id === targetId), 0, moved);
+  render();
+  fetch('/api/prototypes/reorder', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids: prototypes.map((p) => p.id) }),
+  });
+}
 
 async function syncTagsFromPrototypes() {
   const missing = [...new Set(prototypes.map((p) => p.type).filter(Boolean))].filter(
@@ -515,10 +551,13 @@ function render() {
   const visible =
     activeFilter === 'All' ? prototypes : prototypes.filter((p) => p.type === activeFilter);
 
+  const dragEnabled = activeFilter === 'All';
+
   for (const p of visible) {
     const card = document.createElement('div');
     card.className = 'card' + (p.pinned ? ' pinned' : '');
     card.dataset.id = p.id;
+    card.dataset.pinned = p.pinned ? '1' : '0';
 
     const thumb = document.createElement('div');
     thumb.className = 'card-thumb' + (p.imageUrl ? '' : ' placeholder');
@@ -599,13 +638,43 @@ function render() {
       const rect = card.getBoundingClientRect();
       const px = (e.clientX - rect.left) / rect.width;
       const py = (e.clientY - rect.top) / rect.height;
-      card.style.setProperty('--tilt-y', `${(px - 0.5) * 5}deg`);
-      card.style.setProperty('--tilt-x', `${(0.5 - py) * 5}deg`);
+      card.style.setProperty('--tilt-y', `${(px - 0.5) * 10}deg`);
+      card.style.setProperty('--tilt-x', `${(0.5 - py) * 10}deg`);
     });
     card.addEventListener('mouseleave', () => {
       card.style.setProperty('--tilt-x', '0deg');
       card.style.setProperty('--tilt-y', '0deg');
     });
+
+    if (dragEnabled) {
+      card.draggable = true;
+      card.addEventListener('dragstart', (e) => {
+        dragId = p.id;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        for (const el of grid.children) el.classList.remove('drag-over');
+        dragId = null;
+      });
+      card.addEventListener('dragover', (e) => {
+        if (dragId === null || dragId === p.id) return;
+        const dragged = prototypes.find((x) => x.id === dragId);
+        if (!dragged || dragged.pinned !== p.pinned) return;
+        e.preventDefault();
+        card.classList.add('drag-over');
+      });
+      card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over');
+        if (dragId === null || dragId === p.id) return;
+        const dragged = prototypes.find((x) => x.id === dragId);
+        if (!dragged || dragged.pinned !== p.pinned) return;
+        reorderPrototype(dragId, p.id);
+      });
+    }
 
     grid.appendChild(card);
   }

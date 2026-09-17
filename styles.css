@@ -79,7 +79,7 @@ body {
 
 .page-intro h1 {
   font-size: 48px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.05;
   margin: 0 0 16px;
@@ -136,6 +136,17 @@ body {
 .filter-chip.active {
   background: var(--ink);
   border-color: var(--ink);
+  color: #fff;
+}
+
+.filter-chip-count {
+  margin-left: 6px;
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--ink);
+}
+
+.filter-chip.active .filter-chip-count {
   color: #fff;
 }
 
@@ -270,14 +281,13 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: rgba(99, 91, 255, 0.1);
-  padding: 3px 8px;
-  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-light);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 999px;
   margin-bottom: 6px;
 }
 
@@ -301,6 +311,20 @@ body {
 
 .card.pinned {
   border-color: rgba(99, 91, 255, 0.35);
+}
+
+.card[draggable="true"] {
+  cursor: grab;
+}
+
+.card.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.card.drag-over {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 91, 255, 0.25);
 }
 
 .icon-btn.active {
@@ -667,7 +691,8 @@ body {
   transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
 }
 
-.upload-drop:hover {
+.upload-drop:hover,
+.upload-drop.drag-over {
   border-color: var(--accent);
   color: var(--accent);
   background: rgba(99, 91, 255, 0.04);
