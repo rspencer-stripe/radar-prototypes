@@ -108,6 +108,14 @@ function getAllTags() {
   return [...found];
 }
 
+function tagCount(tag) {
+  return prototypes.filter((p) => p.type === tag).length;
+}
+
+function sortTagsByCount(tags) {
+  return [...tags].sort((a, b) => tagCount(b) - tagCount(a) || a.localeCompare(b));
+}
+
 let tagPickerAdding = false;
 let renamingTag = null;
 
@@ -229,7 +237,7 @@ function renderAuthorsList() {
 function renderTagsList() {
   const list = document.getElementById('tags-list');
   list.innerHTML = '';
-  for (const tag of settings.tags) {
+  for (const tag of sortTagsByCount(settings.tags)) {
     const pill = document.createElement('span');
     pill.className = 'settings-pill';
     pill.textContent = tag;
@@ -356,7 +364,7 @@ function renderTagPicker() {
 }
 
 function renderFilterChips() {
-  const usedTags = getAllTags().sort((a, b) => a.localeCompare(b));
+  const usedTags = sortTagsByCount(getAllTags());
 
   filterBar.innerHTML = '';
   const allChip = document.createElement('button');
@@ -669,6 +677,7 @@ async function deletePrototype(id) {
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  await scrapeLink();
   const payload = {
     name: fieldName.value.trim(),
     author: fieldAuthor.value,

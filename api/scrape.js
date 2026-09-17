@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     const endpoint =
       'https://api.microlink.io/?url=' +
       encodeURIComponent(target.toString()) +
-      '&screenshot=true&meta=true&waitUntil=networkidle0&waitFor=3000';
+      '&screenshot=true&meta=true&waitUntil=networkidle0&waitFor=4000';
 
     const response = await fetch(endpoint);
     const data = await response.json();
