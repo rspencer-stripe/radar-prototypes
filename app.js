@@ -34,15 +34,16 @@ const ICONS = {
   figma: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2a3 3 0 0 0 0 6h3V2Z"/><path d="M11 8H8a3 3 0 1 0 3 3Z"/><path d="M11 14H8a3 3 0 1 0 3 3Z"/><path d="M14 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/><path d="M14 8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>',
   image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
   sheet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
+  slides: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 20.5h8"/><path d="M12 17v3.5"/></svg>',
   link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
 };
 
+const GOOGLE_DOC_HOSTS = ['docs.google.com', 'drive.google.com', 'sheets.google.com', 'slides.google.com'];
+
 const DOC_HOST_ICONS = [
   { hosts: ['figma.com'], icon: 'figma', className: 'placeholder-figma' },
-  { hosts: ['docs.google.com', 'notion.so', 'notion.site', 'quip.com', 'dropbox.com', 'sharepoint.com', 'onedrive.live.com'], icon: 'doc', className: 'placeholder-doc' },
-  { hosts: ['sheets.google.com', 'coda.io'], icon: 'sheet', className: 'placeholder-doc' },
-  { hosts: ['slides.google.com'], icon: 'doc', className: 'placeholder-doc' },
-  { hosts: ['drive.google.com'], icon: 'doc', className: 'placeholder-doc' },
+  { hosts: ['notion.so', 'notion.site', 'quip.com', 'dropbox.com', 'sharepoint.com', 'onedrive.live.com'], icon: 'doc', className: 'placeholder-doc' },
+  { hosts: ['coda.io'], icon: 'sheet', className: 'placeholder-doc' },
 ];
 
 const TYPE_PLACEHOLDER = {
@@ -59,9 +60,27 @@ function hostOf(url) {
   }
 }
 
+function googleDocIcon(host, link) {
+  if (host.startsWith('sheets.')) return 'sheet';
+  if (host.startsWith('slides.')) return 'slides';
+  let pathname = '';
+  try {
+    pathname = new URL(link).pathname;
+  } catch {
+    return 'doc';
+  }
+  if (pathname.startsWith('/spreadsheets')) return 'sheet';
+  if (pathname.startsWith('/presentation')) return 'slides';
+  return 'doc';
+}
+
 function placeholderFor(prototype) {
-  const host = hostOf(prototype.link || '');
+  const link = prototype.link || '';
+  const host = hostOf(link);
   if (host) {
+    if (GOOGLE_DOC_HOSTS.some((h) => host === h || host.endsWith('.' + h))) {
+      return { icon: googleDocIcon(host, link), className: 'placeholder-doc' };
+    }
     for (const entry of DOC_HOST_ICONS) {
       if (entry.hosts.some((h) => host === h || host.endsWith('.' + h))) {
         return { icon: entry.icon, className: entry.className };
@@ -74,7 +93,7 @@ function placeholderFor(prototype) {
     : { icon: 'image', className: 'placeholder-generic' };
 }
 
-const DOC_LINK_HOSTS = DOC_HOST_ICONS.flatMap((e) => e.hosts);
+const DOC_LINK_HOSTS = [...GOOGLE_DOC_HOSTS, ...DOC_HOST_ICONS.flatMap((e) => e.hosts)];
 
 function isDocLink(url) {
   const host = hostOf(url);
@@ -95,6 +114,14 @@ let renamingTag = null;
 function selectTag(tag) {
   fieldType.value = tag;
   tagPickerAdding = false;
+  if (!settings.tags.includes(tag)) {
+    saveSettings({ tags: [...settings.tags, tag] }).then((ok) => {
+      if (ok) {
+        renderTagsList();
+        renderFilterChips();
+      }
+    });
+  }
   renderTagPicker();
 }
 
@@ -426,6 +453,17 @@ fieldUpload.addEventListener('change', async () => {
 
 let prototypes = [];
 
+async function syncTagsFromPrototypes() {
+  const missing = [...new Set(prototypes.map((p) => p.type).filter(Boolean))].filter(
+    (t) => !settings.tags.includes(t)
+  );
+  if (!missing.length) return;
+  if (await saveSettings({ tags: [...settings.tags, ...missing] })) {
+    renderTagsList();
+    renderFilterChips();
+  }
+}
+
 async function loadPrototypes() {
   if (!modalOverlay.hidden) return;
   const res = await fetch('/api/prototypes');
@@ -433,6 +471,7 @@ async function loadPrototypes() {
   const changed = JSON.stringify(next) !== JSON.stringify(prototypes);
   prototypes = next;
   if (changed) render();
+  if (settingsLoaded) await syncTagsFromPrototypes();
 }
 
 async function togglePin(p) {
@@ -776,13 +815,17 @@ tagsAddInput.addEventListener('keydown', (e) => {
 
 modalOverlay.hidden = true;
 
+let settingsLoaded = false;
+
 async function loadSettings() {
   const res = await fetch('/api/settings');
   settings = await res.json();
+  settingsLoaded = true;
   renderAuthorOptions();
   renderAuthorsList();
   renderTagsList();
   render();
+  await syncTagsFromPrototypes();
 }
 
 loadSettings();
