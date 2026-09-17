@@ -582,14 +582,48 @@ filterBar.addEventListener('click', (e) => {
 });
 
 const cardSizeInput = document.getElementById('card-size');
-const savedCardSize = localStorage.getItem('cardSize');
-if (savedCardSize) {
-  document.documentElement.style.setProperty('--card-min', `${savedCardSize}px`);
-  cardSizeInput.value = savedCardSize;
+const settingsGear = document.getElementById('settings-gear');
+const settingsPanel = document.getElementById('settings-panel');
+const GRID_GAP = 32;
+
+function applyCardColumns() {
+  const containerWidth = grid.clientWidth;
+  const desired = Number(cardSizeInput.value);
+  const columns = Math.max(1, Math.round((containerWidth + GRID_GAP) / (desired + GRID_GAP)));
+  grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
 }
+
+const savedCardSize = localStorage.getItem('cardSize');
+if (savedCardSize) cardSizeInput.value = savedCardSize;
+applyCardColumns();
+
 cardSizeInput.addEventListener('input', () => {
-  document.documentElement.style.setProperty('--card-min', `${cardSizeInput.value}px`);
+  applyCardColumns();
   localStorage.setItem('cardSize', cardSizeInput.value);
+});
+
+window.addEventListener('resize', applyCardColumns);
+
+function openSettingsPanel() {
+  settingsPanel.hidden = false;
+  requestAnimationFrame(() => settingsPanel.classList.add('open'));
+}
+
+function closeSettingsPanel() {
+  settingsPanel.classList.remove('open');
+  setTimeout(() => {
+    settingsPanel.hidden = true;
+  }, 160);
+}
+
+settingsGear.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (settingsPanel.hidden) openSettingsPanel();
+  else closeSettingsPanel();
+});
+
+document.addEventListener('click', (e) => {
+  if (!settingsPanel.hidden && !e.target.closest('#settings-dock')) closeSettingsPanel();
 });
 
 modalOverlay.hidden = true;
