@@ -573,13 +573,40 @@ uploadDrop.addEventListener('drop', (e) => {
 let prototypes = [];
 let dragId = null;
 let newItemId = null;
+let dropTarget = null;
 
-function reorderPrototype(draggedId, targetId) {
+const dropIndicator = document.createElement('div');
+dropIndicator.className = 'drop-indicator';
+dropIndicator.hidden = true;
+
+function showDropIndicator(card, after) {
+  const gridRect = grid.getBoundingClientRect();
+  const rect = card.getBoundingClientRect();
+  const x = (after ? rect.right : rect.left) - gridRect.left;
+  dropIndicator.style.left = `${x}px`;
+  dropIndicator.style.top = `${rect.top - gridRect.top}px`;
+  dropIndicator.style.height = `${rect.height}px`;
+  dropIndicator.hidden = false;
+  grid.appendChild(dropIndicator);
+}
+
+function hideDropIndicator() {
+  dropIndicator.hidden = true;
+  dropTarget = null;
+}
+
+grid.addEventListener('dragleave', (e) => {
+  if (!grid.contains(e.relatedTarget)) hideDropIndicator();
+});
+
+function reorderPrototype(draggedId, targetId, after) {
   const fromIndex = prototypes.findIndex((p) => p.id === draggedId);
-  const toIndex = prototypes.findIndex((p) => p.id === targetId);
-  if (fromIndex === -1 || toIndex === -1) return;
+  if (fromIndex === -1) return;
   const [moved] = prototypes.splice(fromIndex, 1);
-  prototypes.splice(prototypes.findIndex((p) => p.id === targetId), 0, moved);
+  let toIndex = prototypes.findIndex((p) => p.id === targetId);
+  if (toIndex === -1) return;
+  if (after) toIndex += 1;
+  prototypes.splice(toIndex, 0, moved);
   render();
   fetch('/api/prototypes/reorder', {
     method: 'PUT',
@@ -823,7 +850,7 @@ function renderGridView(visible) {
       });
       card.addEventListener('dragend', () => {
         card.classList.remove('dragging');
-        for (const el of grid.children) el.classList.remove('drag-over');
+        hideDropIndicator();
         dragId = null;
       });
       card.addEventListener('dragover', (e) => {
@@ -831,16 +858,18 @@ function renderGridView(visible) {
         const dragged = prototypes.find((x) => x.id === dragId);
         if (!dragged || dragged.pinned !== p.pinned) return;
         e.preventDefault();
-        card.classList.add('drag-over');
+        const rect = card.getBoundingClientRect();
+        const after = e.clientX - rect.left > rect.width / 2;
+        dropTarget = { id: p.id, after };
+        showDropIndicator(card, after);
       });
-      card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
       card.addEventListener('drop', (e) => {
         e.preventDefault();
-        card.classList.remove('drag-over');
-        if (dragId === null || dragId === p.id) return;
+        if (dragId === null || !dropTarget) return;
         const dragged = prototypes.find((x) => x.id === dragId);
         if (!dragged || dragged.pinned !== p.pinned) return;
-        reorderPrototype(dragId, p.id);
+        reorderPrototype(dragId, dropTarget.id, dropTarget.after);
+        hideDropIndicator();
       });
     }
 
