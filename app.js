@@ -1025,11 +1025,11 @@ function renderGridView(visible) {
   flipAnimate(prevRects);
 }
 
-const CARD_GROW_MS = 260; // line -> wireframe box; sibling shift is synced to this
-const RING_DRAW_MS = 320; // gradient stroke traces the wireframe's perimeter
-const RING_FILL_AT = 0.62; // real content starts crossfading in at this fraction of the draw
-const RING_FADE_MS = 180; // ring fades out once the trace completes
-const NEW_CARD_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const CARD_GROW_MS = 420; // line -> wireframe box; sibling shift is synced to this
+const RING_DRAW_MS = 480; // gradient stroke traces the wireframe's perimeter
+const RING_FILL_AT = 0.72; // real content starts crossfading in at this fraction of the draw
+const RING_FADE_MS = 260; // ring fades out once the trace completes
+const NEW_CARD_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
 
 function flipAnimate(prevRects) {
   let newCard = null;
@@ -1125,6 +1125,7 @@ function startStrokeWave(card) {
   rectEl.style.strokeDashoffset = String(length);
 
   requestAnimationFrame(() => {
+    svg.classList.add('ring-in');
     rectEl.style.transition = `stroke-dashoffset ${RING_DRAW_MS}ms ${NEW_CARD_EASE}`;
     rectEl.style.strokeDashoffset = '0';
   });

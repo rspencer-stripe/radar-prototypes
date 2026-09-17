@@ -365,42 +365,45 @@ body {
   }
 }
 
-/* New-card materialize: thin line -> dashed wireframe box -> stroke-draw -> real card */
+/* New-card materialize: thin line -> wireframe box -> stroke-draw -> real card */
 .card.card-new {
-  animation: card-expand var(--card-new-ms, 260ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: card-expand var(--card-new-ms, 420ms) cubic-bezier(0.4, 0, 0.2, 1) both;
   transform-origin: 50% 50%;
-  border-style: dashed;
   border-color: var(--accent);
   background: var(--bg);
   box-shadow: none;
+  transition: border-color 260ms ease, background-color 260ms ease, box-shadow 260ms ease;
 }
 
 @keyframes card-expand {
-  from {
+  0% {
     transform: scaleX(0.015);
+    opacity: 0.001;
   }
-  to {
+  12% {
+    opacity: 1;
+  }
+  100% {
     transform: scaleX(1);
+    opacity: 1;
   }
 }
 
 .card.card-new .card-thumb,
 .card.card-new .card-body {
   opacity: 0;
+  transition: opacity 280ms ease;
 }
 
 .card.card-new-fill {
-  border-style: solid;
   border-color: var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
-  transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
 }
 
 .card.card-new-fill .card-thumb,
 .card.card-new-fill .card-body {
   opacity: 1;
-  transition: opacity 200ms ease;
 }
 
 .card-draw-ring {
@@ -411,8 +414,12 @@ body {
   overflow: visible;
   pointer-events: none;
   z-index: 5;
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+.card-draw-ring.ring-in {
   opacity: 1;
-  transition: opacity 180ms ease;
 }
 
 .card-draw-ring.ring-out {
