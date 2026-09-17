@@ -25,6 +25,34 @@ let lastScrapedLink = '';
 
 let settings = { authors: [], tags: [] };
 
+const HANDLE_TO_NAME = {
+  rspencer: 'Ryan',
+  slindblad: 'Shelby',
+  averette: 'Anne',
+  kkoch: 'Katie',
+  tkimura: 'Tara',
+  cstrauss: 'Craig',
+};
+
+function resolveAuthorInput(value) {
+  const handle = value.trim().replace(/^@/, '').toLowerCase();
+  return HANDLE_TO_NAME[handle] || value.trim();
+}
+
+function authorInitial(name) {
+  return (name || '?').trim().charAt(0).toUpperCase();
+}
+
+function authorColor(name) {
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360;
+  return `hsl(${hash}, 60%, 45%)`;
+}
+
+function avatarHtml(name) {
+  return `<span class="avatar" style="background:${authorColor(name)}">${authorInitial(name)}</span>`;
+}
+
 const ICONS = {
   pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>',
   edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
@@ -226,7 +254,10 @@ function renderAuthorsList() {
   for (const author of sortAuthorsByCount(settings.authors)) {
     const pill = document.createElement('span');
     pill.className = 'settings-pill';
-    pill.textContent = author;
+    pill.innerHTML = avatarHtml(author);
+    const label = document.createElement('span');
+    label.textContent = author;
+    pill.appendChild(label);
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'settings-pill-remove';
@@ -533,17 +564,94 @@ function formatDate(iso) {
 }
 
 function render() {
+  emptyState.hidden = prototypes.length > 0;
+  renderFilterChips();
+
+  const visible =
+    activeFilter === 'All' ? prototypes : prototypes.filter((p) => p.type === activeFilter);
+
+  if (viewMode === 'table') {
+    renderTableView(visible);
+  } else {
+    renderGridView(visible);
+  }
+}
+
+function renderTableView(visible) {
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+
+  for (const p of visible) {
+    const row = document.createElement('tr');
+    row.dataset.id = p.id;
+
+    const nameCell = document.createElement('td');
+    if (p.link) {
+      const link = document.createElement('a');
+      link.href = p.link;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.className = 'table-name-link';
+      link.textContent = p.name;
+      nameCell.appendChild(link);
+    } else {
+      nameCell.textContent = p.name;
+    }
+
+    const authorCell = document.createElement('td');
+    authorCell.innerHTML = `${avatarHtml(p.author)}<span>${p.author}</span>`;
+    authorCell.className = 'table-author-cell';
+
+    const tagCell = document.createElement('td');
+    const badge = document.createElement('span');
+    badge.className = 'type-badge';
+    badge.textContent = p.type;
+    tagCell.appendChild(badge);
+
+    const dateCell = document.createElement('td');
+    dateCell.textContent = formatDate(p.createdAt);
+
+    const actionsCell = document.createElement('td');
+    actionsCell.className = 'table-actions-cell';
+
+    const pinBtn = document.createElement('button');
+    pinBtn.className = 'icon-btn' + (p.pinned ? ' active' : '');
+    pinBtn.innerHTML = ICONS.pin;
+    pinBtn.setAttribute('aria-label', p.pinned ? 'Unpin' : 'Pin');
+    pinBtn.onclick = () => togglePin(p);
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'icon-btn';
+    editBtn.innerHTML = ICONS.edit;
+    editBtn.setAttribute('aria-label', 'Edit');
+    editBtn.onclick = () => openModal(p);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'icon-btn danger';
+    deleteBtn.innerHTML = ICONS.trash;
+    deleteBtn.setAttribute('aria-label', 'Delete');
+    deleteBtn.onclick = () => deletePrototype(p.id);
+
+    actionsCell.appendChild(editBtn);
+    actionsCell.appendChild(deleteBtn);
+    actionsCell.appendChild(pinBtn);
+
+    row.appendChild(nameCell);
+    row.appendChild(authorCell);
+    row.appendChild(tagCell);
+    row.appendChild(dateCell);
+    row.appendChild(actionsCell);
+    tbody.appendChild(row);
+  }
+}
+
+function renderGridView(visible) {
   const prevRects = new Map();
   for (const el of grid.children) {
     if (el.dataset.id) prevRects.set(el.dataset.id, el.getBoundingClientRect());
   }
 
   grid.innerHTML = '';
-  emptyState.hidden = prototypes.length > 0;
-  renderFilterChips();
-
-  const visible =
-    activeFilter === 'All' ? prototypes : prototypes.filter((p) => p.type === activeFilter);
 
   const dragEnabled = activeFilter === 'All';
 
@@ -613,7 +721,7 @@ function render() {
 
     const meta = document.createElement('div');
     meta.className = 'card-meta';
-    meta.innerHTML = `<span>${p.author}</span><span>&middot;</span><span>${formatDate(p.createdAt)}</span>`;
+    meta.innerHTML = `${avatarHtml(p.author)}<span>${p.author}</span><span>&middot;</span><span>${formatDate(p.createdAt)}</span>`;
 
     body.appendChild(badge);
     body.appendChild(name);
@@ -815,6 +923,31 @@ const settingsGear = document.getElementById('settings-gear');
 const settingsPanel = document.getElementById('settings-panel');
 const GRID_GAP = 22;
 
+const tableWrap = document.getElementById('table-wrap');
+const viewToggle = document.getElementById('view-toggle');
+const cardSizeSection = document.getElementById('card-size-section');
+let viewMode = localStorage.getItem('viewMode') || 'grid';
+
+function applyViewMode() {
+  grid.hidden = viewMode !== 'grid';
+  tableWrap.hidden = viewMode !== 'table';
+  cardSizeSection.hidden = viewMode !== 'grid';
+  for (const btn of viewToggle.querySelectorAll('.view-toggle-btn')) {
+    btn.classList.toggle('active', btn.dataset.view === viewMode);
+  }
+}
+
+viewToggle.addEventListener('click', (e) => {
+  const btn = e.target.closest('.view-toggle-btn');
+  if (!btn) return;
+  viewMode = btn.dataset.view;
+  localStorage.setItem('viewMode', viewMode);
+  applyViewMode();
+  render();
+});
+
+applyViewMode();
+
 function applyCardColumns() {
   const containerWidth = grid.clientWidth;
   const desired = Number(cardSizeInput.value);
@@ -861,7 +994,7 @@ const tagsAddInput = document.getElementById('tags-add-input');
 const tagsAddBtn = document.getElementById('tags-add-btn');
 
 async function addAuthor() {
-  const value = authorsAddInput.value.trim();
+  const value = resolveAuthorInput(authorsAddInput.value);
   authorsAddInput.value = '';
   if (!value || settings.authors.includes(value)) return;
   if (await saveSettings({ authors: [...settings.authors, value] })) {

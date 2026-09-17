@@ -28,7 +28,10 @@
       <div class="filter-chips" id="filter-bar">
         <button class="filter-chip active" data-filter="All">All</button>
       </div>
-      <button class="btn btn-primary" id="add-btn">+ Add</button>
+      <button class="btn btn-primary" id="add-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add
+      </button>
     </div>
 
     <div id="empty-state" class="empty-state" hidden>
@@ -37,6 +40,21 @@
     </div>
 
     <div class="grid" id="grid"></div>
+
+    <div class="table-wrap" id="table-wrap" hidden>
+      <table class="proto-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Author</th>
+            <th>Tag</th>
+            <th>Added</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
   </main>
 
   <div class="settings-dock" id="settings-dock">
@@ -45,6 +63,14 @@
     </button>
     <div class="settings-panel" id="settings-panel" hidden>
       <div class="settings-section">
+        <span class="settings-label">View</span>
+        <div class="view-toggle" id="view-toggle">
+          <button type="button" class="view-toggle-btn active" data-view="grid">Grid</button>
+          <button type="button" class="view-toggle-btn" data-view="table">Table</button>
+        </div>
+      </div>
+
+      <div class="settings-section" id="card-size-section">
         <span class="settings-label">Card size</span>
         <input type="range" id="card-size" min="180" max="420" step="4" value="248" aria-label="Card size" />
       </div>
