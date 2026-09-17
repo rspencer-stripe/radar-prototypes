@@ -3,5 +3,13 @@
     "api/scrape.js": {
       "maxDuration": 25
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/(index.html|app.js|styles.css)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    }
+  ]
 }
