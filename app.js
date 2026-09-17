@@ -120,6 +120,37 @@ async function renameTag(oldTag, newTag) {
   render();
 }
 
+async function deleteTag(tag) {
+  const count = prototypes.filter((p) => p.type === tag).length;
+  if (
+    count > 0 &&
+    !confirm(`${count} item${count > 1 ? 's' : ''} use "${tag}". They'll be moved to "Prototype". Delete this tag?`)
+  ) {
+    return;
+  }
+
+  const fallback = 'Prototype';
+  const res = await fetch('/api/tags', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tag, fallback }),
+  });
+  if (!res.ok) return;
+
+  for (const p of prototypes) {
+    if (p.type === tag) p.type = fallback;
+  }
+  if (fieldType.value === tag) fieldType.value = fallback;
+
+  if (settings.tags.includes(tag)) {
+    await saveSettings({ tags: settings.tags.filter((t) => t !== tag) });
+    renderTagsList();
+  }
+
+  renderTagPicker();
+  render();
+}
+
 function renderAuthorOptions() {
   const selected = fieldAuthor.value;
   fieldAuthor.innerHTML = '<option value="" disabled selected>Select an author</option>';
@@ -250,6 +281,16 @@ function renderTagPicker() {
       renderTagPicker();
     };
     pill.appendChild(editIcon);
+
+    const deleteIcon = document.createElement('span');
+    deleteIcon.className = 'tag-pill-delete';
+    deleteIcon.innerHTML = ICONS.trash;
+    deleteIcon.setAttribute('aria-label', `Delete ${tag}`);
+    deleteIcon.onclick = (e) => {
+      e.stopPropagation();
+      deleteTag(tag);
+    };
+    pill.appendChild(deleteIcon);
 
     tagPicker.appendChild(pill);
   }
