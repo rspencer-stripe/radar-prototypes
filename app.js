@@ -254,13 +254,7 @@ function renderTagsList() {
     remove.className = 'settings-pill-remove';
     remove.innerHTML = '&times;';
     remove.setAttribute('aria-label', `Remove ${tag}`);
-    remove.onclick = async () => {
-      const next = settings.tags.filter((t) => t !== tag);
-      if (await saveSettings({ tags: next })) {
-        renderTagsList();
-        render();
-      }
-    };
+    remove.onclick = () => deleteTag(tag);
     pill.appendChild(remove);
     list.appendChild(pill);
   }
@@ -306,27 +300,22 @@ function renderTagPicker() {
     pill.type = 'button';
     pill.className = 'tag-pill' + (tag === selected ? ' active' : '');
     pill.onclick = () => selectTag(tag);
-    pill.ondblclick = (e) => {
-      e.preventDefault();
-      renamingTag = tag;
-      renderTagPicker();
-    };
-    pill.title = 'Double-click to rename';
 
     const label = document.createElement('span');
     label.className = 'tag-pill-label';
     label.textContent = tag;
     pill.appendChild(label);
 
-    const deleteIcon = document.createElement('span');
-    deleteIcon.className = 'tag-pill-delete';
-    deleteIcon.innerHTML = ICONS.trash;
-    deleteIcon.setAttribute('aria-label', `Delete ${tag}`);
-    deleteIcon.onclick = (e) => {
+    const editIcon = document.createElement('span');
+    editIcon.className = 'tag-pill-delete';
+    editIcon.innerHTML = ICONS.edit;
+    editIcon.setAttribute('aria-label', `Rename ${tag}`);
+    editIcon.onclick = (e) => {
       e.stopPropagation();
-      deleteTag(tag);
+      renamingTag = tag;
+      renderTagPicker();
     };
-    pill.appendChild(deleteIcon);
+    pill.appendChild(editIcon);
 
     tagPicker.appendChild(pill);
   }
