@@ -49,8 +49,9 @@
     </div>
 
     <div id="empty-state" class="empty-state" hidden>
-      <p>Nothing here yet.</p>
+      <p id="empty-state-text">Nothing here yet.</p>
       <button class="btn btn-primary" id="empty-add-btn">Add your first item</button>
+      <button class="btn btn-secondary" id="empty-clear-filters-btn" hidden>Clear filters</button>
     </div>
 
     <div class="grid" id="grid"></div>
@@ -136,25 +137,28 @@
         <h2 id="modal-title">Add item</h2>
         <button class="icon-btn" id="modal-close" aria-label="Close">&times;</button>
       </div>
-      <form id="prototype-form">
+      <form id="prototype-form" novalidate>
         <input type="hidden" id="prototype-id" />
 
-        <label class="field">
+        <label class="field" id="field-link-wrap">
           <span class="field-label">Link</span>
           <input type="url" id="field-link" required placeholder="https://..." autofocus />
           <span class="field-hint" id="fetch-status"></span>
+          <span class="field-error" id="field-link-error"></span>
         </label>
 
-        <label class="field">
+        <label class="field" id="field-name-wrap">
           <span class="field-label">Name</span>
-          <input type="text" id="field-name" required placeholder="e.g. Radar rules builder v2" />
+          <input type="text" id="field-name" required placeholder="Radar rules builder v2" />
+          <span class="field-error" id="field-name-error"></span>
         </label>
 
-        <label class="field">
+        <label class="field" id="field-author-wrap">
           <span class="field-label">Author</span>
           <select id="field-author" required>
             <option value="" disabled selected>Select an author</option>
           </select>
+          <span class="field-error" id="field-author-error"></span>
         </label>
 
         <div class="field">
@@ -171,7 +175,7 @@
             <div class="upload-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
             </div>
-            <span>Click to upload an image</span>
+            <span>Drop an image or click to upload</span>
             <input type="file" id="field-upload" accept="image/*" hidden />
           </label>
 
@@ -192,6 +196,19 @@
       </form>
     </div>
   </div>
+
+  <div class="modal-overlay" id="confirm-overlay" hidden>
+    <div class="modal modal-confirm">
+      <h2 id="confirm-title">Delete this item?</h2>
+      <p id="confirm-body">This cannot be undone.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirm-ok">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>

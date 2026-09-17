@@ -1,5 +1,8 @@
 const grid = document.getElementById('grid');
 const emptyState = document.getElementById('empty-state');
+const emptyStateText = document.getElementById('empty-state-text');
+const emptyAddBtn = document.getElementById('empty-add-btn');
+const emptyClearFiltersBtn = document.getElementById('empty-clear-filters-btn');
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const form = document.getElementById('prototype-form');
@@ -16,6 +19,56 @@ const authorFilter = document.getElementById('author-filter');
 const authorFilterBtn = document.getElementById('author-filter-btn');
 const authorFilterLabel = document.getElementById('author-filter-label');
 const authorFilterMenu = document.getElementById('author-filter-menu');
+
+const confirmOverlay = document.getElementById('confirm-overlay');
+const confirmTitle = document.getElementById('confirm-title');
+const confirmBody = document.getElementById('confirm-body');
+const confirmOkBtn = document.getElementById('confirm-ok');
+const confirmCancelBtn = document.getElementById('confirm-cancel');
+const toastStack = document.getElementById('toast-stack');
+
+function showToast(message, type = 'error') {
+  const toast = document.createElement('div');
+  toast.className = 'toast' + (type === 'error' ? ' error' : '');
+  toast.textContent = message;
+  toastStack.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('open'));
+  setTimeout(() => {
+    toast.classList.remove('open');
+    setTimeout(() => toast.remove(), 180);
+  }, 4000);
+}
+
+let confirmResolve = null;
+
+function confirmDialog({ title, body, confirmLabel = 'Delete', danger = true }) {
+  confirmTitle.textContent = title;
+  confirmBody.textContent = body;
+  confirmOkBtn.textContent = confirmLabel;
+  confirmOkBtn.className = 'btn' + (danger ? ' btn-danger' : ' btn-primary');
+  confirmOverlay.hidden = false;
+  requestAnimationFrame(() => confirmOverlay.classList.add('open'));
+  return new Promise((resolve) => {
+    confirmResolve = resolve;
+  });
+}
+
+function closeConfirmDialog(result) {
+  confirmOverlay.classList.remove('open');
+  setTimeout(() => {
+    confirmOverlay.hidden = true;
+  }, 180);
+  if (confirmResolve) {
+    confirmResolve(result);
+    confirmResolve = null;
+  }
+}
+
+confirmOkBtn.addEventListener('click', () => closeConfirmDialog(true));
+confirmCancelBtn.addEventListener('click', () => closeConfirmDialog(false));
+confirmOverlay.addEventListener('click', (e) => {
+  if (e.target === confirmOverlay) closeConfirmDialog(false);
+});
 
 function getUrlFilters() {
   const params = new URLSearchParams(location.search);
@@ -131,12 +184,18 @@ async function uploadImage(dataUrl) {
 
 async function setAuthorPhoto(author, file) {
   if (!file || !file.type.startsWith('image/')) return;
-  const dataUrl = await resizeImageToDataUrl(file, 96);
-  const url = await uploadImage(dataUrl);
-  const nextPhotos = { ...settings.authorPhotos, [author]: url };
-  if (await saveSettings({ authorPhotos: nextPhotos })) {
-    renderAuthorsList();
-    render();
+  try {
+    const dataUrl = await resizeImageToDataUrl(file, 96);
+    const url = await uploadImage(dataUrl);
+    const nextPhotos = { ...settings.authorPhotos, [author]: url };
+    if (await saveSettings({ authorPhotos: nextPhotos })) {
+      renderAuthorsList();
+      render();
+    } else {
+      showToast("Couldn't save that photo.");
+    }
+  } catch {
+    showToast("Couldn't upload that photo.");
   }
 }
 
@@ -269,6 +328,7 @@ async function renameTag(oldTag, newTag) {
     body: JSON.stringify({ oldTag, newTag }),
   });
   if (!res.ok) {
+    showToast("Couldn't rename that tag.");
     renderTagPicker();
     return;
   }
@@ -287,11 +347,13 @@ async function renameTag(oldTag, newTag) {
 async function deleteTag(tag) {
   const count = prototypes.filter((p) => p.type === tag).length;
   const fallback = sortTagsByCount(settings.tags.filter((t) => t !== tag))[0] || 'Prototype';
-  if (
-    count > 0 &&
-    !confirm(`${count} item${count > 1 ? 's' : ''} use "${tag}". They'll be moved to "${fallback}". Delete this tag?`)
-  ) {
-    return;
+  if (count > 0) {
+    const ok = await confirmDialog({
+      title: `Delete "${tag}"?`,
+      body: `${count} item${count > 1 ? 's' : ''} use this tag. They'll be moved to "${fallback}".`,
+      confirmLabel: 'Delete tag',
+    });
+    if (!ok) return;
   }
 
   const res = await fetch('/api/tags', {
@@ -299,7 +361,10 @@ async function deleteTag(tag) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tag, fallback }),
   });
-  if (!res.ok) return;
+  if (!res.ok) {
+    showToast("Couldn't delete that tag.");
+    return;
+  }
 
   for (const p of prototypes) {
     if (p.type === tag) p.type = fallback;
@@ -377,6 +442,8 @@ function renderAuthorsList() {
         renderAuthorsList();
         renderAuthorOptions();
         if (prevSelected === author) fieldAuthor.value = '';
+      } else {
+        showToast("Couldn't remove that author.");
       }
     };
     pill.appendChild(remove);
@@ -749,7 +816,14 @@ function reorderPrototype(draggedId, targetId, after) {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ids: prototypes.map((p) => p.id) }),
-  });
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error('reorder failed');
+    })
+    .catch(() => {
+      showToast("Couldn't save the new order.");
+      forceReload();
+    });
 }
 
 async function syncTagsFromPrototypes() {
@@ -779,12 +853,17 @@ async function loadPrototypes() {
 }
 
 async function togglePin(p) {
-  await fetch(`/api/prototypes/${p.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pinned: !p.pinned }),
-  });
-  await forceReload();
+  try {
+    const res = await fetch(`/api/prototypes/${p.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pinned: !p.pinned }),
+    });
+    if (!res.ok) throw new Error('pin failed');
+    await forceReload();
+  } catch {
+    showToast("Couldn't update pin status.");
+  }
 }
 
 async function forceReload() {
@@ -808,6 +887,15 @@ function render() {
   if (activeAuthor !== 'All') visible = visible.filter((p) => p.author === activeAuthor);
 
   emptyState.hidden = visible.length > 0;
+  const filtered = activeFilter !== 'All' || activeAuthor !== 'All';
+  emptyStateText.textContent =
+    prototypes.length === 0
+      ? 'Nothing here yet.'
+      : filtered
+      ? 'No items match these filters.'
+      : 'Nothing here yet.';
+  emptyAddBtn.hidden = prototypes.length > 0;
+  emptyClearFiltersBtn.hidden = prototypes.length === 0 || !filtered;
 
   if (viewMode === 'table') {
     renderTableView(visible);
@@ -1146,6 +1234,7 @@ function openModal(prototype) {
   form.reset();
   fetchStatus.textContent = '';
   fetchStatus.classList.remove('error');
+  clearFieldErrors();
   lastScrapedLink = '';
   tagPickerAdding = false;
   renamingTag = null;
@@ -1183,19 +1272,97 @@ function closeModal() {
 }
 
 async function deletePrototype(id) {
-  if (!confirm('Delete this item? This cannot be undone.')) return;
+  const ok = await confirmDialog({
+    title: 'Delete this item?',
+    body: 'This cannot be undone.',
+    confirmLabel: 'Delete',
+  });
+  if (!ok) return;
+
   const card = grid.querySelector(`[data-id="${id}"]`);
+  let fadeMs = 0;
   if (card) {
+    fadeMs = 180;
     card.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
     card.style.opacity = '0';
     card.style.transform = 'scale(0.96)';
   }
-  await fetch(`/api/prototypes/${id}`, { method: 'DELETE' });
-  await forceReload();
+
+  setTimeout(() => {
+    const idx = prototypes.findIndex((p) => p.id === id);
+    if (idx !== -1) {
+      prototypes.splice(idx, 1);
+      render();
+    }
+  }, fadeMs);
+
+  try {
+    const res = await fetch(`/api/prototypes/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('delete failed');
+  } catch {
+    showToast("Couldn't delete that item — restoring it.");
+    await forceReload();
+  }
+}
+
+const fieldLinkWrap = document.getElementById('field-link-wrap');
+const fieldNameWrap = document.getElementById('field-name-wrap');
+const fieldAuthorWrap = document.getElementById('field-author-wrap');
+const fieldLinkError = document.getElementById('field-link-error');
+const fieldNameError = document.getElementById('field-name-error');
+const fieldAuthorError = document.getElementById('field-author-error');
+const saveBtn = document.getElementById('save-btn');
+
+function setFieldError(wrap, errorEl, message) {
+  wrap.classList.toggle('invalid', !!message);
+  errorEl.textContent = message || '';
+}
+
+function clearFieldErrors() {
+  setFieldError(fieldLinkWrap, fieldLinkError, '');
+  setFieldError(fieldNameWrap, fieldNameError, '');
+  setFieldError(fieldAuthorWrap, fieldAuthorError, '');
+}
+
+fieldLink.addEventListener('input', () => setFieldError(fieldLinkWrap, fieldLinkError, ''));
+fieldName.addEventListener('input', () => setFieldError(fieldNameWrap, fieldNameError, ''));
+fieldAuthor.addEventListener('change', () => setFieldError(fieldAuthorWrap, fieldAuthorError, ''));
+
+function validateForm() {
+  clearFieldErrors();
+  let firstInvalid = null;
+
+  const link = fieldLink.value.trim();
+  if (!link) {
+    setFieldError(fieldLinkWrap, fieldLinkError, 'Add a link.');
+    firstInvalid = firstInvalid || fieldLink;
+  } else {
+    try {
+      new URL(link);
+    } catch {
+      setFieldError(fieldLinkWrap, fieldLinkError, 'Enter a valid URL.');
+      firstInvalid = firstInvalid || fieldLink;
+    }
+  }
+
+  if (!fieldName.value.trim()) {
+    setFieldError(fieldNameWrap, fieldNameError, 'Give it a name.');
+    firstInvalid = firstInvalid || fieldName;
+  }
+
+  if (!fieldAuthor.value) {
+    setFieldError(fieldAuthorWrap, fieldAuthorError, 'Select an author.');
+    firstInvalid = firstInvalid || fieldAuthor;
+  }
+
+  if (firstInvalid) firstInvalid.focus();
+  return !firstInvalid;
 }
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!validateForm()) return;
+
   await scrapeLink();
   const payload = {
     name: fieldName.value.trim(),
@@ -1207,31 +1374,47 @@ form.addEventListener('submit', async (e) => {
 
   localStorage.setItem('lastAuthor', payload.author);
 
-  const id = fieldId.value;
-  if (id) {
-    await fetch(`/api/prototypes/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  } else {
-    const res = await fetch('/api/prototypes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) {
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
+
+  try {
+    const id = fieldId.value;
+    if (id) {
+      const res = await fetch(`/api/prototypes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('save failed');
+    } else {
+      const res = await fetch('/api/prototypes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('save failed');
       const created = await res.json();
       newItemId = String(created.id);
     }
-  }
 
-  closeModal();
-  await forceReload();
+    closeModal();
+    await forceReload();
+  } catch {
+    showToast("Couldn't save this item — try again.");
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  }
 });
 
 document.getElementById('add-btn').onclick = () => openModal(null);
-document.getElementById('empty-add-btn').onclick = () => openModal(null);
+emptyAddBtn.onclick = () => openModal(null);
+emptyClearFiltersBtn.onclick = () => {
+  activeFilter = 'All';
+  activeAuthor = 'All';
+  updateUrlFilters();
+  render();
+};
 document.getElementById('cancel-btn').onclick = closeModal;
 document.getElementById('modal-close').onclick = closeModal;
 modalOverlay.addEventListener('click', (e) => {
@@ -1420,6 +1603,8 @@ async function addAuthor() {
   if (await saveSettings({ authors: [...settings.authors, value] })) {
     renderAuthorsList();
     renderAuthorOptions();
+  } else {
+    showToast("Couldn't add that author.");
   }
 }
 
@@ -1431,6 +1616,8 @@ async function addTag() {
     renderTagsList();
     if (!modalOverlay.hidden) renderTagPicker();
     render();
+  } else {
+    showToast("Couldn't add that tag.");
   }
 }
 
