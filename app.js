@@ -49,7 +49,6 @@ const uploadRemove = document.getElementById('upload-remove');
 
 let lastScrapedLink = '';
 let modalSession = 0;
-let justCreatedId = null;
 
 let settings = { authors: [], tags: [], authorPhotos: {} };
 
@@ -1026,86 +1025,9 @@ function renderGridView(visible) {
   flipAnimate(prevRects);
 }
 
-const SIBLING_SHIFT_MS = 150;
-const CARD_NEW_DRAW_MS = 420;
-
-function animateCardCreate(card) {
-  card.classList.add('card-new');
-
-  const rect = card.getBoundingClientRect();
-  const w = rect.width;
-  const h = rect.height;
-  const r = 12;
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const uid = 'card-ring-' + Math.random().toString(36).slice(2, 8);
-
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('class', 'card-draw-ring');
-  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  svg.setAttribute('preserveAspectRatio', 'none');
-
-  const defs = document.createElementNS(svgNS, 'defs');
-  const gradient = document.createElementNS(svgNS, 'linearGradient');
-  gradient.setAttribute('id', uid);
-  gradient.setAttribute('x1', '0');
-  gradient.setAttribute('y1', '0');
-  gradient.setAttribute('x2', '1');
-  gradient.setAttribute('y2', '1');
-  [
-    ['0%', '#ff4785'],
-    ['25%', '#ffb86b'],
-    ['50%', '#35d07f'],
-    ['75%', '#4dabf7'],
-    ['100%', '#9b8afb'],
-  ].forEach(([offset, color]) => {
-    const stop = document.createElementNS(svgNS, 'stop');
-    stop.setAttribute('offset', offset);
-    stop.setAttribute('stop-color', color);
-    gradient.appendChild(stop);
-  });
-  defs.appendChild(gradient);
-  svg.appendChild(defs);
-
-  const rectEl = document.createElementNS(svgNS, 'rect');
-  rectEl.setAttribute('x', 1);
-  rectEl.setAttribute('y', 1);
-  rectEl.setAttribute('width', Math.max(0, w - 2));
-  rectEl.setAttribute('height', Math.max(0, h - 2));
-  rectEl.setAttribute('rx', r);
-  rectEl.setAttribute('ry', r);
-  rectEl.setAttribute('stroke', `url(#${uid})`);
-  svg.appendChild(rectEl);
-  card.appendChild(svg);
-
-  const length = rectEl.getTotalLength();
-  rectEl.style.strokeDasharray = String(length);
-  rectEl.style.strokeDashoffset = String(length);
-
-  requestAnimationFrame(() => {
-    rectEl.style.transition = `stroke-dashoffset ${CARD_NEW_DRAW_MS}ms cubic-bezier(0.45, 0, 0.2, 1)`;
-    rectEl.style.strokeDashoffset = '0';
-  });
-
-  setTimeout(() => card.classList.add('card-new-fill'), CARD_NEW_DRAW_MS * 0.55);
-  setTimeout(() => svg.classList.add('ring-out'), CARD_NEW_DRAW_MS);
-  setTimeout(() => {
-    svg.remove();
-    card.classList.remove('card-new', 'card-new-fill');
-  }, CARD_NEW_DRAW_MS + 260);
-}
-
 function flipAnimate(prevRects) {
-  for (const el of grid.children) {
-    if (el.dataset.id === justCreatedId) {
-      justCreatedId = null;
-      animateCardCreate(el);
-      continue;
-    }
-  }
-
   if (!prevRects.size) return;
   for (const el of grid.children) {
-    if (el.classList.contains('card-new')) continue;
     const prev = prevRects.get(el.dataset.id);
     if (!prev) {
       el.classList.add('card-enter');
@@ -1119,7 +1041,7 @@ function flipAnimate(prevRects) {
     el.style.transition = 'none';
     el.style.transform = `translate(${dx}px, ${dy}px)`;
     requestAnimationFrame(() => {
-      el.style.transition = `transform ${SIBLING_SHIFT_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+      el.style.transition = 'transform 0.35s cubic-bezier(0.2, 0, 0.2, 1)';
       el.style.transform = '';
       el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
     });
@@ -1200,15 +1122,11 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify(payload),
     });
   } else {
-    const res = await fetch('/api/prototypes', {
+    await fetch('/api/prototypes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (res.ok) {
-      const created = await res.json();
-      justCreatedId = String(created.id);
-    }
   }
 
   closeModal();

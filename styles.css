@@ -365,56 +365,6 @@ body {
   }
 }
 
-.card.card-new {
-  animation: card-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  transform-origin: 50% 0%;
-}
-
-.card.card-new .card-thumb,
-.card.card-new .card-body {
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 320ms ease, transform 320ms ease;
-}
-
-.card.card-new.card-new-fill .card-thumb,
-.card.card-new.card-new-fill .card-body {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-@keyframes card-rise {
-  from {
-    transform: scaleY(0.05);
-    opacity: 0.6;
-  }
-  to {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-.card-draw-ring {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-  z-index: 5;
-  opacity: 1;
-  transition: opacity 260ms ease;
-}
-
-.card-draw-ring.ring-out {
-  opacity: 0;
-}
-
-.card-draw-ring rect {
-  fill: none;
-  stroke-width: 2px;
-}
-
 .card-thumb {
   aspect-ratio: 16 / 10;
   background: var(--thumb-bg);
