@@ -201,17 +201,22 @@ body {
 
 .filter-bar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 32px;
-  flex-wrap: wrap;
 }
 
 .filter-chips {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.filter-bar .btn {
+  flex-shrink: 0;
 }
 
 .filter-chip {
