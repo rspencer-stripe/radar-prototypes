@@ -584,7 +584,7 @@ filterBar.addEventListener('click', (e) => {
 const cardSizeInput = document.getElementById('card-size');
 const settingsGear = document.getElementById('settings-gear');
 const settingsPanel = document.getElementById('settings-panel');
-const GRID_GAP = 32;
+const GRID_GAP = 22;
 
 function applyCardColumns() {
   const containerWidth = grid.clientWidth;
