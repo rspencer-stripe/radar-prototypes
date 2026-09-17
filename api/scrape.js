@@ -1,4 +1,6 @@
-module.exports = async (req, res) => {
+const { withErrorHandling } = require('../lib/handler');
+
+module.exports = withErrorHandling(async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method not allowed' });
     return;
@@ -28,7 +30,7 @@ module.exports = async (req, res) => {
       wait +
       (force ? '&force=true' : '');
 
-    const response = await fetch(endpoint);
+    const response = await fetch(endpoint, { signal: AbortSignal.timeout(20000) });
     const data = await response.json();
 
     if (data.status !== 'success') {
@@ -46,4 +48,4 @@ module.exports = async (req, res) => {
   } catch (err) {
     res.status(502).json({ error: 'could not fetch preview for that url' });
   }
-};
+});
