@@ -1088,6 +1088,14 @@ const authorsAddBtn = document.getElementById('authors-add-btn');
 const tagsAddInput = document.getElementById('tags-add-input');
 const tagsAddBtn = document.getElementById('tags-add-btn');
 
+authorsAddInput.addEventListener('input', () => {
+  if (authorsAddInput.value && !authorsAddInput.value.startsWith('@')) {
+    const pos = authorsAddInput.selectionStart + 1;
+    authorsAddInput.value = '@' + authorsAddInput.value;
+    authorsAddInput.setSelectionRange(pos, pos);
+  }
+});
+
 async function addAuthor() {
   const value = resolveAuthorInput(authorsAddInput.value);
   authorsAddInput.value = '';
