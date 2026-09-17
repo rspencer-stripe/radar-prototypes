@@ -268,22 +268,12 @@ function renderTagPicker() {
       renamingTag = tag;
       renderTagPicker();
     };
+    pill.title = 'Double-click to rename';
 
     const label = document.createElement('span');
     label.className = 'tag-pill-label';
     label.textContent = tag;
     pill.appendChild(label);
-
-    const editIcon = document.createElement('span');
-    editIcon.className = 'tag-pill-edit';
-    editIcon.innerHTML = ICONS.edit;
-    editIcon.setAttribute('aria-label', `Rename ${tag}`);
-    editIcon.onclick = (e) => {
-      e.stopPropagation();
-      renamingTag = tag;
-      renderTagPicker();
-    };
-    pill.appendChild(editIcon);
 
     const deleteIcon = document.createElement('span');
     deleteIcon.className = 'tag-pill-delete';

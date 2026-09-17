@@ -571,37 +571,6 @@ body {
   color: #fff;
 }
 
-.tag-pill-edit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  opacity: 0.4;
-  transition: opacity 0.12s ease;
-}
-
-.tag-pill-edit svg {
-  width: 12px;
-  height: 12px;
-}
-
-.tag-pill:hover .tag-pill-edit {
-  opacity: 0.7;
-}
-
-.tag-pill-edit:hover {
-  opacity: 1 !important;
-}
-
-.tag-pill.active .tag-pill-edit {
-  opacity: 0.6;
-}
-
-.tag-pill.active:hover .tag-pill-edit {
-  opacity: 0.9;
-}
-
 .tag-pill-delete {
   display: flex;
   align-items: center;
@@ -632,6 +601,11 @@ body {
 
 .tag-pill.active:hover .tag-pill-delete {
   opacity: 0.9;
+}
+
+.tag-pill.active .tag-pill-delete:hover {
+  opacity: 1 !important;
+  color: #fff;
 }
 
 .tag-pill-add {
