@@ -582,7 +582,8 @@ dropIndicator.hidden = true;
 function showDropIndicator(card, after) {
   const gridRect = grid.getBoundingClientRect();
   const rect = card.getBoundingClientRect();
-  const x = (after ? rect.right : rect.left) - gridRect.left;
+  const gap = parseFloat(getComputedStyle(grid).columnGap) || GRID_GAP;
+  const x = (after ? rect.right + gap / 2 : rect.left - gap / 2) - gridRect.left;
   dropIndicator.style.left = `${x}px`;
   dropIndicator.style.top = `${rect.top - gridRect.top}px`;
   dropIndicator.style.height = `${rect.height}px`;
