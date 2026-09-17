@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const { url } = req.body || {};
+  const { url, waitFor, force } = req.body || {};
   if (!url) {
     res.status(400).json({ error: 'url is required' });
     return;
@@ -18,11 +18,15 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const wait = Math.min(Math.max(Number(waitFor) || 4000, 1000), 10000);
+
   try {
     const endpoint =
       'https://api.microlink.io/?url=' +
       encodeURIComponent(target.toString()) +
-      '&screenshot=true&meta=true&waitUntil=networkidle0&waitFor=4000';
+      '&screenshot=true&meta=true&waitUntil=networkidle0&waitFor=' +
+      wait +
+      (force ? '&force=true' : '');
 
     const response = await fetch(endpoint);
     const data = await response.json();

@@ -19,6 +19,7 @@ const uploadDrop = document.getElementById('upload-drop');
 const uploadFilled = document.getElementById('upload-filled');
 const fieldUpload = document.getElementById('field-upload');
 const uploadReplace = document.getElementById('upload-replace');
+const uploadReload = document.getElementById('upload-reload');
 const uploadRemove = document.getElementById('upload-remove');
 
 let lastScrapedLink = '';
@@ -539,6 +540,41 @@ async function scrapeLink() {
   }
 }
 
+async function rescrapeLink() {
+  const url = fieldLink.value.trim();
+  if (!url) return;
+
+  try {
+    new URL(url);
+  } catch {
+    return;
+  }
+
+  fetchStatus.textContent = 'Reloading page for a fresher screenshot…';
+  fetchStatus.classList.remove('error');
+
+  try {
+    const res = await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, waitFor: 6000, force: true }),
+    });
+    if (!res.ok) throw new Error('scrape failed');
+    const data = await res.json();
+
+    if (data.imageUrl) {
+      fieldImage.value = data.imageUrl;
+      showPreview(data.imageUrl);
+      fetchStatus.textContent = 'Preview reloaded.';
+    } else {
+      fetchStatus.textContent = 'Reloaded, but no screenshot came back.';
+    }
+  } catch {
+    fetchStatus.textContent = "Couldn't reload the preview.";
+    fetchStatus.classList.add('error');
+  }
+}
+
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -997,6 +1033,7 @@ modalOverlay.addEventListener('click', (e) => {
 fieldLink.addEventListener('blur', scrapeLink);
 
 uploadReplace.addEventListener('click', () => fieldUpload.click());
+uploadReload.addEventListener('click', rescrapeLink);
 uploadRemove.addEventListener('click', () => {
   fieldImage.value = '';
   showPreview('');
@@ -1052,7 +1089,17 @@ function applyCardColumns() {
 }
 
 const savedCardSize = localStorage.getItem('cardSize');
-if (savedCardSize) cardSizeInput.value = savedCardSize;
+if (savedCardSize) {
+  cardSizeInput.value = savedCardSize;
+} else {
+  const containerWidth = grid.clientWidth;
+  if (containerWidth > 0) {
+    const min = Number(cardSizeInput.min);
+    const max = Number(cardSizeInput.max);
+    const desiredFor5 = Math.round((containerWidth + GRID_GAP) / 5 - GRID_GAP);
+    cardSizeInput.value = Math.min(max, Math.max(min, desiredFor5));
+  }
+}
 applyCardColumns();
 
 cardSizeInput.addEventListener('input', () => {
