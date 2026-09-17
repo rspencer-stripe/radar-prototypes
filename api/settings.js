@@ -7,12 +7,12 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'PUT') {
-    const { authors, tags } = req.body || {};
-    if (!authors && !tags) {
-      res.status(400).json({ error: 'authors or tags is required' });
+    const { authors, tags, authorPhotos } = req.body || {};
+    if (!authors && !tags && !authorPhotos) {
+      res.status(400).json({ error: 'authors, tags, or authorPhotos is required' });
       return;
     }
-    res.status(200).json(await updateSettings({ authors, tags }));
+    res.status(200).json(await updateSettings({ authors, tags, authorPhotos }));
     return;
   }
 

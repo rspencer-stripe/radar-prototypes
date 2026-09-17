@@ -23,7 +23,7 @@ const uploadRemove = document.getElementById('upload-remove');
 
 let lastScrapedLink = '';
 
-let settings = { authors: [], tags: [] };
+let settings = { authors: [], tags: [], authorPhotos: {} };
 
 const HANDLE_TO_NAME = {
   rspencer: 'Ryan',
@@ -43,14 +43,62 @@ function authorInitial(name) {
   return (name || '?').trim().charAt(0).toUpperCase();
 }
 
+const AVATAR_COLORS = {
+  Ryan: '#635bff',
+  Shelby: '#e94b8c',
+  Anne: '#00a86b',
+  Katie: '#f5a623',
+  Tara: '#00b8d9',
+  Craig: '#3d5afe',
+};
+
+const AVATAR_PALETTE = ['#635bff', '#e94b8c', '#00a86b', '#f5a623', '#00b8d9', '#3d5afe', '#8e44ad', '#ff6b35'];
+
 function authorColor(name) {
+  if (AVATAR_COLORS[name]) return AVATAR_COLORS[name];
   let hash = 0;
-  for (let i = 0; i < (name || '').length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360;
-  return `hsl(${hash}, 60%, 45%)`;
+  for (let i = 0; i < (name || '').length; i++) hash = (hash * 31 + name.charCodeAt(i)) % AVATAR_PALETTE.length;
+  return AVATAR_PALETTE[Math.abs(hash)];
 }
 
 function avatarHtml(name) {
+  const photo = settings.authorPhotos && settings.authorPhotos[name];
+  if (photo) return `<span class="avatar avatar-photo" style="background-image:url('${photo}')"></span>`;
   return `<span class="avatar" style="background:${authorColor(name)}">${authorInitial(name)}</span>`;
+}
+
+function resizeImageToDataUrl(file, size) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const scale = Math.max(size / img.width, size / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function setAuthorPhoto(author, file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const dataUrl = await resizeImageToDataUrl(file, 96);
+  const nextPhotos = { ...settings.authorPhotos, [author]: dataUrl };
+  if (await saveSettings({ authorPhotos: nextPhotos })) {
+    renderAuthorsList();
+    render();
+  }
 }
 
 const ICONS = {
@@ -254,7 +302,25 @@ function renderAuthorsList() {
   for (const author of sortAuthorsByCount(settings.authors)) {
     const pill = document.createElement('span');
     pill.className = 'settings-pill';
-    pill.innerHTML = avatarHtml(author);
+
+    const avatarBtn = document.createElement('button');
+    avatarBtn.type = 'button';
+    avatarBtn.className = 'avatar-upload-btn';
+    avatarBtn.innerHTML = avatarHtml(author);
+    avatarBtn.setAttribute('aria-label', `Change photo for ${author}`);
+    avatarBtn.title = 'Click to set a photo';
+    const photoInput = document.createElement('input');
+    photoInput.type = 'file';
+    photoInput.accept = 'image/*';
+    photoInput.hidden = true;
+    photoInput.addEventListener('change', () => setAuthorPhoto(author, photoInput.files[0]));
+    avatarBtn.appendChild(photoInput);
+    avatarBtn.onclick = (e) => {
+      e.stopPropagation();
+      photoInput.click();
+    };
+    pill.appendChild(avatarBtn);
+
     const label = document.createElement('span');
     label.textContent = author;
     pill.appendChild(label);
