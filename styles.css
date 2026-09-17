@@ -50,6 +50,18 @@ body {
   padding: 48px 32px 96px;
 }
 
+@media (min-width: 1440px) {
+  .page {
+    max-width: 1320px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .page {
+    max-width: 1520px;
+  }
+}
+
 .hero {
   position: relative;
   padding: 8px 0 4px;
