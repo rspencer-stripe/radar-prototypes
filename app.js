@@ -116,6 +116,10 @@ function sortTagsByCount(tags) {
   return [...tags].sort((a, b) => tagCount(b) - tagCount(a) || a.localeCompare(b));
 }
 
+function defaultTag() {
+  return sortTagsByCount(settings.tags)[0] || 'Prototype';
+}
+
 function authorCount(author) {
   return prototypes.filter((p) => p.author === author).length;
 }
@@ -165,14 +169,14 @@ async function renameTag(oldTag, newTag) {
 
 async function deleteTag(tag) {
   const count = prototypes.filter((p) => p.type === tag).length;
+  const fallback = sortTagsByCount(settings.tags.filter((t) => t !== tag))[0] || 'Prototype';
   if (
     count > 0 &&
-    !confirm(`${count} item${count > 1 ? 's' : ''} use "${tag}". They'll be moved to "Prototype". Delete this tag?`)
+    !confirm(`${count} item${count > 1 ? 's' : ''} use "${tag}". They'll be moved to "${fallback}". Delete this tag?`)
   ) {
     return;
   }
 
-  const fallback = 'Prototype';
   const res = await fetch('/api/tags', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
@@ -471,6 +475,7 @@ uploadDrop.addEventListener('drop', (e) => {
 
 let prototypes = [];
 let dragId = null;
+let newItemId = null;
 
 function reorderPrototype(draggedId, targetId) {
   const fromIndex = prototypes.findIndex((p) => p.id === draggedId);
@@ -707,7 +712,7 @@ function openModal(prototype) {
     fieldId.value = prototype.id;
     fieldName.value = prototype.name;
     fieldAuthor.value = prototype.author;
-    fieldType.value = prototype.type || 'Prototype';
+    fieldType.value = prototype.type || defaultTag();
     fieldImage.value = prototype.imageUrl || '';
     fieldLink.value = prototype.link || '';
     lastScrapedLink = prototype.link || '';
@@ -715,7 +720,7 @@ function openModal(prototype) {
   } else {
     modalTitle.textContent = 'Add item';
     fieldId.value = '';
-    fieldType.value = 'Prototype';
+    fieldType.value = defaultTag();
     const lastAuthor = localStorage.getItem('lastAuthor');
     if (lastAuthor) fieldAuthor.value = lastAuthor;
     showPreview('');
@@ -751,7 +756,7 @@ form.addEventListener('submit', async (e) => {
   const payload = {
     name: fieldName.value.trim(),
     author: fieldAuthor.value,
-    type: fieldType.value.trim() || 'Prototype',
+    type: fieldType.value.trim() || defaultTag(),
     imageUrl: fieldImage.value.trim(),
     link: fieldLink.value.trim(),
   };
