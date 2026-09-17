@@ -43,8 +43,28 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
     <div class="settings-panel" id="settings-panel" hidden>
-      <span>Card size</span>
-      <input type="range" id="card-size" min="180" max="420" step="4" value="248" aria-label="Card size" />
+      <div class="settings-section">
+        <span class="settings-label">Card size</span>
+        <input type="range" id="card-size" min="180" max="420" step="4" value="248" aria-label="Card size" />
+      </div>
+
+      <div class="settings-section">
+        <span class="settings-label">Authors</span>
+        <div class="settings-list" id="authors-list"></div>
+        <div class="settings-add-row">
+          <input type="text" id="authors-add-input" placeholder="Add author…" />
+          <button type="button" class="icon-btn" id="authors-add-btn" aria-label="Add author">+</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <span class="settings-label">Tags</span>
+        <div class="settings-list" id="tags-list"></div>
+        <div class="settings-add-row">
+          <input type="text" id="tags-add-input" placeholder="Add tag…" />
+          <button type="button" class="icon-btn" id="tags-add-btn" aria-label="Add tag">+</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -72,12 +92,6 @@
           <span class="field-label">Author</span>
           <select id="field-author" required>
             <option value="" disabled selected>Select an author</option>
-            <option value="Anne">Anne</option>
-            <option value="Shelby">Shelby</option>
-            <option value="Ryan">Ryan</option>
-            <option value="Craig">Craig</option>
-            <option value="Tara">Tara</option>
-            <option value="Katie">Katie</option>
           </select>
         </label>
 

@@ -23,7 +23,7 @@ const uploadRemove = document.getElementById('upload-remove');
 
 let lastScrapedLink = '';
 
-const DEFAULT_TAGS = ['Figma', 'Prototype', 'Resource'];
+let settings = { authors: [], tags: [] };
 
 const ICONS = {
   pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>',
@@ -82,7 +82,7 @@ function isDocLink(url) {
 }
 
 function getAllTags() {
-  const found = new Set(DEFAULT_TAGS);
+  const found = new Set(settings.tags);
   for (const p of prototypes) {
     if (p.type) found.add(p.type);
   }
@@ -112,8 +112,81 @@ async function renameTag(oldTag, newTag) {
     if (p.type === oldTag) p.type = newTag;
   }
   if (fieldType.value === oldTag) fieldType.value = newTag;
+  if (settings.tags.includes(oldTag)) {
+    settings.tags = settings.tags.map((t) => (t === oldTag ? newTag : t));
+    renderTagsList();
+  }
   renderTagPicker();
   render();
+}
+
+function renderAuthorOptions() {
+  const selected = fieldAuthor.value;
+  fieldAuthor.innerHTML = '<option value="" disabled selected>Select an author</option>';
+  for (const author of settings.authors) {
+    const option = document.createElement('option');
+    option.value = author;
+    option.textContent = author;
+    fieldAuthor.appendChild(option);
+  }
+  if (selected && settings.authors.includes(selected)) fieldAuthor.value = selected;
+}
+
+async function saveSettings(patch) {
+  const res = await fetch('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+  if (res.ok) settings = await res.json();
+  return res.ok;
+}
+
+function renderAuthorsList() {
+  const list = document.getElementById('authors-list');
+  list.innerHTML = '';
+  for (const author of settings.authors) {
+    const pill = document.createElement('span');
+    pill.className = 'settings-pill';
+    pill.textContent = author;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'settings-pill-remove';
+    remove.innerHTML = '&times;';
+    remove.setAttribute('aria-label', `Remove ${author}`);
+    remove.onclick = async () => {
+      const next = settings.authors.filter((a) => a !== author);
+      const prevSelected = fieldAuthor.value;
+      if (await saveSettings({ authors: next })) {
+        renderAuthorsList();
+        renderAuthorOptions();
+        if (prevSelected === author) fieldAuthor.value = '';
+      }
+    };
+    pill.appendChild(remove);
+    list.appendChild(pill);
+  }
+}
+
+function renderTagsList() {
+  const list = document.getElementById('tags-list');
+  list.innerHTML = '';
+  for (const tag of settings.tags) {
+    const pill = document.createElement('span');
+    pill.className = 'settings-pill';
+    pill.textContent = tag;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'settings-pill-remove';
+    remove.innerHTML = '&times;';
+    remove.setAttribute('aria-label', `Remove ${tag}`);
+    remove.onclick = async () => {
+      const next = settings.tags.filter((t) => t !== tag);
+      if (await saveSettings({ tags: next })) renderTagsList();
+    };
+    pill.appendChild(remove);
+    list.appendChild(pill);
+  }
 }
 
 function renderTagPicker() {
@@ -627,6 +700,57 @@ document.addEventListener('click', (e) => {
   if (!settingsPanel.hidden && !e.target.closest('#settings-dock')) closeSettingsPanel();
 });
 
+const authorsAddInput = document.getElementById('authors-add-input');
+const authorsAddBtn = document.getElementById('authors-add-btn');
+const tagsAddInput = document.getElementById('tags-add-input');
+const tagsAddBtn = document.getElementById('tags-add-btn');
+
+async function addAuthor() {
+  const value = authorsAddInput.value.trim();
+  authorsAddInput.value = '';
+  if (!value || settings.authors.includes(value)) return;
+  if (await saveSettings({ authors: [...settings.authors, value] })) {
+    renderAuthorsList();
+    renderAuthorOptions();
+  }
+}
+
+async function addTag() {
+  const value = tagsAddInput.value.trim();
+  tagsAddInput.value = '';
+  if (!value || settings.tags.includes(value)) return;
+  if (await saveSettings({ tags: [...settings.tags, value] })) {
+    renderTagsList();
+    if (!modalOverlay.hidden) renderTagPicker();
+  }
+}
+
+authorsAddBtn.addEventListener('click', addAuthor);
+authorsAddInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addAuthor();
+  }
+});
+
+tagsAddBtn.addEventListener('click', addTag);
+tagsAddInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addTag();
+  }
+});
+
 modalOverlay.hidden = true;
+
+async function loadSettings() {
+  const res = await fetch('/api/settings');
+  settings = await res.json();
+  renderAuthorOptions();
+  renderAuthorsList();
+  renderTagsList();
+}
+
+loadSettings();
 loadPrototypes();
 setInterval(loadPrototypes, 5000);

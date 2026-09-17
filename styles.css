@@ -743,12 +743,16 @@ body {
 }
 
 .settings-panel {
+  position: absolute;
+  bottom: 50px;
+  left: 0;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
+  flex-direction: column;
+  gap: 16px;
+  width: 240px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(8px);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
@@ -756,20 +760,100 @@ body {
   font-weight: 500;
   color: var(--ink-light);
   opacity: 0;
-  transform: translateX(-6px) scale(0.96);
+  transform: translateY(6px) scale(0.98);
   transition: opacity 0.14s ease, transform 0.14s ease;
   pointer-events: none;
 }
 
 .settings-panel.open {
   opacity: 1;
-  transform: translateX(0) scale(1);
+  transform: translateY(0) scale(1);
   pointer-events: auto;
 }
 
 .settings-panel input[type="range"] {
-  width: 140px;
+  width: 100%;
   accent-color: var(--accent);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+.settings-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.settings-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.settings-pill-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  color: var(--ink-light);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.settings-pill-remove:hover {
+  background: rgba(217, 45, 32, 0.1);
+  color: var(--danger);
+}
+
+.settings-add-row {
+  display: flex;
+  gap: 6px;
+}
+
+.settings-add-row input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--ink);
+}
+
+.settings-add-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-add-row .icon-btn {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .modal-actions {
