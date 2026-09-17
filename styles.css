@@ -365,6 +365,85 @@ body {
   }
 }
 
+@property --ring-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.card.card-new {
+  animation: card-rise 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: 50% 0%;
+}
+
+.card.card-new::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  padding: 2px;
+  background: conic-gradient(from var(--ring-angle), #ff4785, #ffb86b, #35d07f, #4dabf7, #9b8afb, #ff4785);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: ring-spin 0.55s linear, ring-fade 0.6s ease 0.05s forwards;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.card.card-new .card-thumb,
+.card.card-new .card-body {
+  animation: card-content-fade 0.4s ease 0.16s both;
+}
+
+@keyframes card-rise {
+  0% {
+    transform: scaleY(0.04);
+    opacity: 0.7;
+  }
+  55% {
+    transform: scaleY(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes card-content-fade {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes ring-spin {
+  from {
+    --ring-angle: 0deg;
+  }
+  to {
+    --ring-angle: 360deg;
+  }
+}
+
+@keyframes ring-fade {
+  0% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .card-thumb {
   aspect-ratio: 16 / 10;
   background: var(--thumb-bg);

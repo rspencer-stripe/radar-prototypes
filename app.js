@@ -49,6 +49,7 @@ const uploadRemove = document.getElementById('upload-remove');
 
 let lastScrapedLink = '';
 let modalSession = 0;
+let justCreatedId = null;
 
 let settings = { authors: [], tags: [], authorPhotos: {} };
 
@@ -1026,8 +1027,18 @@ function renderGridView(visible) {
 }
 
 function flipAnimate(prevRects) {
+  for (const el of grid.children) {
+    if (el.dataset.id === justCreatedId) {
+      justCreatedId = null;
+      el.classList.add('card-new');
+      setTimeout(() => el.classList.remove('card-new'), 650);
+      continue;
+    }
+  }
+
   if (!prevRects.size) return;
   for (const el of grid.children) {
+    if (el.classList.contains('card-new')) continue;
     const prev = prevRects.get(el.dataset.id);
     if (!prev) {
       el.classList.add('card-enter');
@@ -1122,11 +1133,15 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify(payload),
     });
   } else {
-    await fetch('/api/prototypes', {
+    const res = await fetch('/api/prototypes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if (res.ok) {
+      const created = await res.json();
+      justCreatedId = String(created.id);
+    }
   }
 
   closeModal();
