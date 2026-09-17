@@ -595,6 +595,18 @@ function render() {
       thumb.onclick = () => window.open(p.link, '_blank', 'noopener');
     }
 
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width;
+      const py = (e.clientY - rect.top) / rect.height;
+      card.style.setProperty('--tilt-y', `${(px - 0.5) * 5}deg`);
+      card.style.setProperty('--tilt-x', `${(0.5 - py) * 5}deg`);
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.setProperty('--tilt-x', '0deg');
+      card.style.setProperty('--tilt-y', '0deg');
+    });
+
     grid.appendChild(card);
   }
 

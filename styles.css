@@ -153,12 +153,15 @@ body {
 }
 
 .card {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  transform: perspective(800px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(0);
+  transition: box-shadow 0.15s ease, transform 0.12s ease;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -166,7 +169,7 @@ body {
 
 .card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: perspective(800px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(-2px);
 }
 
 .card.card-enter {
@@ -345,11 +348,19 @@ body {
 .icon-btn:hover {
   background: #fff;
   color: var(--ink);
+  border-color: var(--ink-light);
 }
 
 .icon-btn.danger:hover {
+  background: #fff;
   color: var(--danger);
   border-color: var(--danger);
+}
+
+.icon-btn.active:hover {
+  background: var(--accent-dark);
+  color: #fff;
+  border-color: var(--accent-dark);
 }
 
 .card-link {
