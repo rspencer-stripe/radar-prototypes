@@ -570,6 +570,7 @@ body.hide-thumbs .card-thumb {
   border-radius: 8px;
   border-bottom: none;
   flex-shrink: 0;
+  order: 1;
 }
 
 body.hide-thumbs .card-thumb .placeholder-icon {
@@ -590,24 +591,39 @@ body.hide-thumbs .card-body {
   flex-direction: row;
   align-items: center;
   gap: 12px;
+  order: 2;
 }
 
 body.hide-thumbs .card-name {
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 body.hide-thumbs .card-meta {
   flex-shrink: 0;
 }
 
-body.hide-thumbs .type-badge {
+body.hide-thumbs .card-meta span:nth-child(2),
+body.hide-thumbs .card-meta span:nth-child(3) {
+  display: none;
+}
+
+body.hide-thumbs .card .type-badge {
   display: none;
 }
 
 body.hide-thumbs .card-actions {
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  order: 3;
+  flex-shrink: 0;
+}
+
+body.hide-thumbs .card:hover {
+  box-shadow: var(--shadow-sm);
+  transform: none;
 }
 
 .card[draggable="true"] {

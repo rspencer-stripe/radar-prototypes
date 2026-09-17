@@ -975,17 +975,19 @@ function renderGridView(visible) {
       thumb.onclick = () => window.open(p.link, '_blank', 'noopener');
     }
 
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width;
-      const py = (e.clientY - rect.top) / rect.height;
-      card.style.setProperty('--tilt-y', `${(px - 0.5) * 10}deg`);
-      card.style.setProperty('--tilt-x', `${(0.5 - py) * 10}deg`);
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.setProperty('--tilt-x', '0deg');
-      card.style.setProperty('--tilt-y', '0deg');
-    });
+    if (showThumbs) {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
+        card.style.setProperty('--tilt-y', `${(px - 0.5) * 10}deg`);
+        card.style.setProperty('--tilt-x', `${(0.5 - py) * 10}deg`);
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.setProperty('--tilt-x', '0deg');
+        card.style.setProperty('--tilt-y', '0deg');
+      });
+    }
 
     if (dragEnabled) {
       card.draggable = true;
@@ -1346,13 +1348,11 @@ thumbsToggle.addEventListener('click', (e) => {
 applyViewMode();
 applyThumbsMode();
 
+const HIDE_THUMBS_CARD_WIDTH = 300;
+
 function applyCardColumns() {
-  if (!showThumbs) {
-    grid.style.gridTemplateColumns = '1fr';
-    return;
-  }
   const containerWidth = grid.clientWidth;
-  const desired = Number(cardSizeInput.value);
+  const desired = showThumbs ? Number(cardSizeInput.value) : HIDE_THUMBS_CARD_WIDTH;
   const columns = Math.max(1, Math.round((containerWidth + GRID_GAP) / (desired + GRID_GAP)));
   grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
 }
