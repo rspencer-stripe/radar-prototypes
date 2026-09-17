@@ -213,7 +213,10 @@ function renderTagsList() {
     remove.setAttribute('aria-label', `Remove ${tag}`);
     remove.onclick = async () => {
       const next = settings.tags.filter((t) => t !== tag);
-      if (await saveSettings({ tags: next })) renderTagsList();
+      if (await saveSettings({ tags: next })) {
+        renderTagsList();
+        render();
+      }
     };
     pill.appendChild(remove);
     list.appendChild(pill);
@@ -336,9 +339,7 @@ function renderTagPicker() {
 }
 
 function renderFilterChips() {
-  const usedTags = [...new Set(prototypes.map((p) => p.type).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
+  const usedTags = getAllTags().sort((a, b) => a.localeCompare(b));
 
   filterBar.innerHTML = '';
   const allChip = document.createElement('button');
@@ -763,6 +764,7 @@ async function addTag() {
   if (await saveSettings({ tags: [...settings.tags, value] })) {
     renderTagsList();
     if (!modalOverlay.hidden) renderTagPicker();
+    render();
   }
 }
 
@@ -790,6 +792,7 @@ async function loadSettings() {
   renderAuthorOptions();
   renderAuthorsList();
   renderTagsList();
+  render();
 }
 
 loadSettings();
