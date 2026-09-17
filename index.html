@@ -69,17 +69,15 @@
         </label>
 
         <label class="field">
-          <span class="field-label">Description <span class="field-optional">(optional)</span></span>
-          <textarea id="field-description" rows="3" placeholder="What is this?"></textarea>
-        </label>
-
-        <label class="field">
           <span class="field-label">Author</span>
           <select id="field-author" required>
             <option value="" disabled selected>Select an author</option>
             <option value="Anne">Anne</option>
             <option value="Shelby">Shelby</option>
             <option value="Ryan">Ryan</option>
+            <option value="Craig">Craig</option>
+            <option value="Tara">Tara</option>
+            <option value="Katie">Katie</option>
           </select>
         </label>
 
@@ -90,7 +88,7 @@
         </div>
 
         <div class="field">
-          <span class="field-label">Screenshot <span class="field-optional">(auto-filled, or upload your own)</span></span>
+          <span class="field-label">Screenshot <span class="field-optional">(optional)</span></span>
           <input type="hidden" id="field-image" />
 
           <label class="upload-drop" id="upload-drop">
@@ -105,10 +103,8 @@
             <div class="preview-thumb">
               <img id="preview-img" alt="Screenshot preview" />
             </div>
-            <div class="upload-filled-actions">
-              <button type="button" class="btn btn-secondary" id="upload-replace">Replace</button>
-              <button type="button" class="btn btn-secondary" id="upload-remove">Remove</button>
-            </div>
+            <button type="button" class="upload-replace-link" id="upload-replace">Replace</button>
+            <button type="button" class="upload-replace-link" id="upload-remove">Remove</button>
           </div>
         </div>
 

@@ -10,7 +10,6 @@ const fieldAuthor = document.getElementById('field-author');
 const fieldType = document.getElementById('field-type');
 const fieldImage = document.getElementById('field-image');
 const fieldLink = document.getElementById('field-link');
-const fieldDescription = document.getElementById('field-description');
 const filterBar = document.getElementById('filter-bar');
 const tagPicker = document.getElementById('tag-picker');
 let activeFilter = 'All';
@@ -489,13 +488,14 @@ function openModal(prototype) {
     fieldType.value = prototype.type || 'Prototype';
     fieldImage.value = prototype.imageUrl || '';
     fieldLink.value = prototype.link || '';
-    fieldDescription.value = prototype.description || '';
     lastScrapedLink = prototype.link || '';
     showPreview(prototype.imageUrl);
   } else {
     modalTitle.textContent = 'Add item';
     fieldId.value = '';
     fieldType.value = 'Prototype';
+    const lastAuthor = localStorage.getItem('lastAuthor');
+    if (lastAuthor) fieldAuthor.value = lastAuthor;
     showPreview('');
   }
   renderTagPicker();
@@ -531,8 +531,9 @@ form.addEventListener('submit', async (e) => {
     type: fieldType.value.trim() || 'Prototype',
     imageUrl: fieldImage.value.trim(),
     link: fieldLink.value.trim(),
-    description: fieldDescription.value.trim(),
   };
+
+  localStorage.setItem('lastAuthor', payload.author);
 
   const id = fieldId.value;
   if (id) {

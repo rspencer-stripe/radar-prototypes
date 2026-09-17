@@ -79,8 +79,8 @@ body {
 
 .page-intro h1 {
   font-size: 48px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1.05;
   margin: 0 0 16px;
 }
@@ -118,7 +118,7 @@ body {
 .filter-chip {
   font-family: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 8px 16px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -243,7 +243,7 @@ body {
 }
 
 .card-name {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
   color: var(--ink);
   margin: 0;
@@ -361,7 +361,7 @@ body {
 .btn {
   font-family: inherit;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 10px 18px;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -491,7 +491,7 @@ body {
 
 .field-label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink);
 }
 
@@ -543,7 +543,7 @@ body {
 .tag-pill {
   font-family: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -611,7 +611,7 @@ body {
 .tag-add-input {
   font-family: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 7px 14px;
   border-radius: 999px;
   border: 1px solid var(--accent);
@@ -666,22 +666,37 @@ body {
 
 .upload-filled {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 10px;
 }
 
-.upload-filled-actions {
-  display: flex;
-  gap: 8px;
+.upload-filled[hidden] {
+  display: none;
 }
 
-.upload-filled-actions .btn {
-  padding: 7px 14px;
-  font-size: 13px;
+.upload-replace-link {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-light);
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: color 0.12s ease, text-decoration-color 0.12s ease;
+}
+
+.upload-replace-link:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
 }
 
 .preview-thumb {
-  border-radius: 8px;
+  flex-shrink: 0;
+  width: 72px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--border);
   aspect-ratio: 16 / 10;
@@ -730,7 +745,7 @@ body {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink-light);
   opacity: 0;
   transform: translateX(-6px) scale(0.96);
